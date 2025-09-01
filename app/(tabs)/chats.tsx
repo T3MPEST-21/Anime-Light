@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, Image, View, TouchableOpacity, StyleSheet } from 'react-native';
 
 
-export default function Bookmarks() {
+export default function Chats() {
   return (
     <View
 style={{
@@ -11,8 +11,7 @@ justifyContent: 'center',
 alignItems: 'center',
 }}
 >
-      <Text>Bookmarks is now working</Text>
+      <Text>Chats is now working</Text>
     </View>
   );
 };
-

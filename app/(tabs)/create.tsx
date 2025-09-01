@@ -11,12 +11,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { imageFile } from '@/services/ImageService';
 import CustomActivityLoader from '@/components/CustomActivityLoader';
+import { RichEditor } from 'react-native-pell-rich-editor';
 
 export default function Create() {
   const router = useRouter();
   const { user } = useAuth() || {};
   const bodyRef = useRef('');
-  const editorRef = useRef(null);
+  const editorRef = useRef<RichEditor>(null);
   const [loading, setLoading] = useState(false);
   const [mediaList, setMediaList] = useState<{ uri: string; caption: string }[]>([]);
   const [error, setError] = useState('');
@@ -55,43 +56,87 @@ export default function Create() {
       return;
     }
 
+    console.log('=== Starting post creation ===');
+    console.log('User ID:', user.id);
+    console.log('Body:', body);
+    console.log('Media list length:', mediaList.length);
+    console.log('Media list:', mediaList);
+
     setLoading(true);
     try {
       // 1) Upload images (if any) to Supabase Storage and collect URLs
       const uploaded: { url: string; caption: string }[] = [];
-      for (const item of mediaList) {
+      for (let i = 0; i < mediaList.length; i++) {
+        const item = mediaList[i];
+        console.log(`\n--- Uploading image ${i + 1}/${mediaList.length} ---`);
+        console.log('Image URI:', item.uri);
+        
         const res = await imageFile(`posts/${user.id}`, item.uri, true);
+        console.log(`Image ${i + 1} upload result:`, res);
+        
         if (!res.success || !res.data) {
-          throw new Error('Failed to upload one of the images');
+          console.log(`Image ${i + 1} upload failed:`, res);
+          throw new Error(`Failed to upload image ${i + 1}: ${res.msg || 'Unknown error'}`);
         }
         uploaded.push({ url: res.data, caption: item.caption || '' });
       }
+      console.log('\n--- All images uploaded successfully ---');
+      console.log('Uploaded images:', uploaded);
 
       // 2) Insert the post row
+      console.log('\n--- Inserting post row ---');
+      const postData = { user_id: user.id, body };
+      console.log('Post data to insert:', postData);
+      
       const { data: postInsert, error: postError } = await supabase
         .from('posts')
-        .insert([{ user_id: user.id, body }])
+        .insert([postData])
         .select('id')
         .single();
 
-      if (postError || !postInsert) throw postError || new Error('Failed to create post');
+      console.log('Post insert result:', { postInsert, postError });
+      if (postError) {
+        console.log('Post error details:', postError);
+        throw new Error(`Failed to create post: ${postError.message}`);
+      }
+      if (!postInsert) {
+        throw new Error('Failed to create post: No data returned');
+      }
 
       // 3) Insert post_images rows (if any)
       if (uploaded.length > 0) {
-        const imagesRows = uploaded.map((u) => ({ post_id: postInsert.id, url: u.url, caption: u.caption }));
+        console.log('\n--- Inserting post images ---');
+        const imagesRows = uploaded.map((u) => ({ 
+          post_id: postInsert.id, 
+          image_url: u.url, 
+          caption: u.caption 
+        }));
+        console.log('Images rows to insert:', imagesRows);
+        
         const { error: imagesError } = await supabase.from('post_images').insert(imagesRows);
-        if (imagesError) throw imagesError;
+        console.log('Images insert result:', { imagesError });
+        
+        if (imagesError) {
+          console.log('Images error details:', imagesError);
+          throw new Error(`Failed to save images: ${imagesError.message}`);
+        }
       }
 
       // 4) Reset UI and show success
+      console.log('\n=== Post created successfully! ===');
       setSuccess('Post created successfully!');
       setMediaList([]);
       bodyRef.current = '';
+      // Clear the rich text editor
+      editorRef.current?.setContentHTML('');
       // Optionally navigate back to feed
       // router.replace('/(tabs)')
     } catch (e: any) {
-      console.log('Create post error:', e?.message || e);
-      setError('Failed to create post. Please try again.');
+      console.log('\n=== CREATE POST ERROR ===');
+      console.log('Error object:', e);
+      console.log('Error message:', e?.message || 'Unknown error');
+      console.log('Error stack:', e?.stack);
+      setError(`Failed to create post: ${e?.message || 'Please try again'}`);
     } finally {
       setLoading(false);
     }
@@ -146,7 +191,7 @@ export default function Create() {
           onPress={handlePost}
           disabled={loading}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.postBtnText}>Post</Text>}
+          {loading ? <CustomActivityLoader size={25} /> : <Text style={styles.postBtnText}>Post</Text>}
         </TouchableOpacity>
       </ScrollView>
     </View>
