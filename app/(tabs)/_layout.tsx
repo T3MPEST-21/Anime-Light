@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import {Tabs} from 'expo-router';
-import { COLORS } from '@/constants/theme';
+import { COLORS, second } from '@/constants/theme';
 import {Ionicons} from '@expo/vector-icons';
 
 
@@ -13,8 +13,8 @@ export default function TabLayout() {
     screenOptions={{
         tabBarShowLabel: false,
         headerShown: false,
-        tabBarActiveTintColor: COLORS.secondary,
-        tabBarInactiveTintColor: COLORS.grey,
+        tabBarActiveTintColor: second.secondary2,
+        tabBarInactiveTintColor: second.secondary3,
         tabBarStyle: {
           backgroundColor: COLORS.background,
           borderTopWidth: 0,
@@ -32,7 +32,7 @@ export default function TabLayout() {
         tabBarIcon: ({color, size}) => <Ionicons name="bookmark" size={size} color={color} />
       }} />
       <Tabs.Screen name="create" options={{
-        tabBarIcon: ({color, size}) => <Ionicons name="add-circle" size={size} color={COLORS.primary} />
+        tabBarIcon: ({color, size}) => <Ionicons name="add-circle" size={size} color={second.primarySecond} />
       }} />
       <Tabs.Screen name="Notification" options={{
         tabBarIcon: ({color, size}) => <Ionicons name="notifications" size={size} color={color} />

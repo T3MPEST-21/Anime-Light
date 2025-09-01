@@ -6,6 +6,7 @@ import CustomButton from '@/components/customButton';
 import BackButton from '@/components/BackButton';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 
 const SignupScreen = () => {
     const router = useRouter();
@@ -18,7 +19,7 @@ const SignupScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setError('');
     if (!fullname || !username || !email || !password || !repeatPassword) {
       setError('Please fill all required fields.');
@@ -28,21 +29,72 @@ const SignupScreen = () => {
       setError('Passwords do not match.');
       return;
     }
+
+    // Trimming input values
+    let name = fullname.trim();
+    let user = username.trim();
+    let mail = email.trim();
+    let anime = favoriteAnime.trim();
+    let pass = password.trim();
+
     setLoading(true);
-    // Simulate signup
-    setTimeout(() => {
-      setLoading(false);
-      // Replace with your signup logic
-      // Success logic here
-    }, 1500);
+
+    const { data, error } = await supabase.auth.signUp({
+      email: mail,
+      password: pass,
+      options: {
+        data: {
+          full_name: name,
+          username: user,
+          favorite_anime: anime,
+        },
+      },
+    });
+
+    setLoading(false);
+
+    const session = data?.session;
+    console.log('session', session);
+    console.log('error', error);
+
+    if (error) {
+      // Log the full error object for debugging
+      console.log('Supabase error object:', error);
+
+      // Check for duplicate username error in various ways
+      if (
+        (error.message && (
+          error.message.toLowerCase().includes('user already registered') ||
+          error.message.toLowerCase().includes('duplicate') ||
+          error.message.toLowerCase().includes('unique constraint') ||
+          error.message.toLowerCase().includes('users_username_key') || // Postgres constraint name
+          error.message.toLowerCase().includes('already exists') ||
+          error.message.toLowerCase().includes('Database error saving new user') ||
+          error.message.toLowerCase().includes('username') && error.message.toLowerCase().includes('already')
+        )) ||
+        (error.code === '23505') // Postgres unique violation code
+      ) {
+        setError("This Username or email is already taken by someone else, why don't you try picking a more unique one?");
+      } else {
+        setError(error.message || 'An unknown error occurred.');
+      }
+      return;
+    }
+
+    // Optionally, navigate to another screen or show success message here
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: second.grayLight }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <BackButton />
         <View style={styles.container}>
           <Text style={styles.title}>Let's get you started, shall we?</Text>

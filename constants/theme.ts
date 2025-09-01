@@ -12,15 +12,24 @@ export const COLORS = {
 } as const;
 
 export const second ={
-  primary: '#00c26f',
-  primaryDark: '#008e5b',
+//buttons
+  primary: '#ff7f50',
+  primarySecond: '#ffd700',
+  //accent, notifications and secondary btn
+  secondary: '#e74c3c',
+  secondary2: '#e9967a',
+  secondary3: '#55423cff',
+  mainBg: '#fdf5e6',
+  text: '#475b6fff',
+ // primary: '#00c26f',
+//  primaryDark: '#008e5b',
   dark: '#3e3e3e',
   white: '#ffffff',
   darkLight: '#e1e1e1',
   gray: '#e3e3e3',
   grayDark: '#797878ff',
-  grayLight: '#f5f5f5',
-  text: '#494949',
+  grayLight: '#aaa9a9ca',
+  //text: '#494949',
   textDark: '#1d1d1d',
   rose: '#ef4444',
   roseLight: '#f87171',

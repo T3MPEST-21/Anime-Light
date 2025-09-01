@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react'
 import BackButton from '@/components/BackButton'
@@ -8,6 +8,7 @@ import { second } from '@/constants/theme';
 import CustomButton from '@/components/customButton';
 
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -16,35 +17,48 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
     if (!email || !password) {
       setError('Please enter both email and password.');
       return;
     }
+
+    //triming name
+    let mail = email.trim();
+    let pass = password.trim();
+
     setLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      setLoading(false);
-      // Replace with your login logic
-      if (email === 'test@example.com' && password === 'password') {
-        router.replace('/(tabs)');
-      } else {
-        setError('Invalid credentials.');
-      }
-    }, 1500);
+
+    const {error} = await supabase.auth.signInWithPassword({
+      email: mail,
+      password: pass,
+    });
+    
+    setLoading(false);
+
+    console.log('error', error);
+    if (error) {
+      Alert.alert('error: ' + error.message);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: second.grayLight }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <BackButton onPress={() => router.back()} />
-      <View style={styles.container}>
-        <Text style={styles.welcomeText}>Hey, Nice to see you again</Text>
-        <View style={styles.form}>
-          <View style={styles.inputWrapper}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <BackButton onPress={() => router.back()} />
+        <View style={styles.container}>
+          <Text style={styles.welcomeText}>Hey, Nice to see you again</Text>
+          <View style={styles.form}>
+            <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={22} color="#aaa" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
@@ -89,6 +103,7 @@ const LoginScreen = () => {
           </View>
         </View>
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

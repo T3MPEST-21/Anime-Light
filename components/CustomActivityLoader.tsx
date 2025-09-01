@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 interface CustomActivityLoaderProps {
   style?: ViewStyle;
@@ -8,11 +9,12 @@ interface CustomActivityLoaderProps {
 
 const CustomActivityLoader: React.FC<CustomActivityLoaderProps> = ({ style, size = 40 }) => {
   return (
-    <View style={[styles.container, style]}> 
-      <Image
-        source={require('../assets/images/Pikachu.gif')}
+    <View style={[styles.container, style]}>
+      <LottieView
+        source={require('../assets/lottie/Pikachu.json')}
+        autoPlay
+        loop
         style={{ width: size, height: size }}
-        resizeMode="contain"
       />
     </View>
   );
