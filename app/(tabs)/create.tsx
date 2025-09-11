@@ -130,7 +130,9 @@ export default function Create() {
       // Clear the rich text editor
       editorRef.current?.setContentHTML('');
       // Optionally navigate back to feed
-      // router.replace('/(tabs)')
+      setTimeout(() => {
+        router.replace('/(tabs)')
+      }, 900);
     } catch (e: any) {
       console.log('\n=== CREATE POST ERROR ===');
       console.log('Error object:', e);

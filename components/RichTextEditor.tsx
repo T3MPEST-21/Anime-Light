@@ -4,7 +4,7 @@ import {actions, RichEditor, RichToolbar} from 'react-native-pell-rich-editor'
 import { radius, second } from '@/constants/theme';
 
 interface RichTextEditorProps {
-  editorRef: React.RefObject<RichEditor>;
+  editorRef: React.RefObject<RichEditor | null>;
   onChange: (body: string) => void;
 }
 

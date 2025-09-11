@@ -1,17 +1,15 @@
-import React from 'react';
-import { Text, Image, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native'
+import React from 'react'
 
+const chats = () => {
 
-export default function Chats() {
   return (
-    <View
-style={{
-flex: 1,
-justifyContent: 'center',
-alignItems: 'center',
-}}
->
-      <Text>Chats is now working</Text>
+    <View>
+      <Text>chats</Text>
     </View>
-  );
-};
+  )
+}
+
+export default chats
+
+const styles = StyleSheet.create({})

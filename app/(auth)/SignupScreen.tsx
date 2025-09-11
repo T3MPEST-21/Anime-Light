@@ -9,7 +9,9 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 const SignupScreen = () => {
-    const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const router = useRouter();
   const [fullname, setFullname] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -148,10 +150,14 @@ const SignupScreen = () => {
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#aaa"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
+                autoCapitalize="none"
               />
+              <TouchableOpacity onPress={() => setShowPassword(v => !v)} accessibilityLabel="Toggle password visibility">
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color="#aaa" />
+              </TouchableOpacity>
             </View>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed-outline" size={22} color="#aaa" style={styles.inputIcon} />
@@ -159,10 +165,14 @@ const SignupScreen = () => {
                 style={styles.input}
                 placeholder="Repeat Password"
                 placeholderTextColor="#aaa"
-                secureTextEntry
+                secureTextEntry={!showRepeatPassword}
                 value={repeatPassword}
                 onChangeText={setRepeatPassword}
+                autoCapitalize="none"
               />
+              <TouchableOpacity onPress={() => setShowRepeatPassword(v => !v)} accessibilityLabel="Toggle repeat password visibility">
+                <Ionicons name={showRepeatPassword ? "eye-off-outline" : "eye-outline"} size={22} color="#aaa" />
+              </TouchableOpacity>
             </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <CustomButton

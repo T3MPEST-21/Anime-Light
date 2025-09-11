@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Text, View, StyleSheet, Pressable, FlatList, RefreshControl, Image, TouchableOpacity } from 'react-native';
+import { Alert, Text, View, StyleSheet, Pressable, FlatList, RefreshControl, Image, TouchableOpacity, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/authContext';
@@ -28,6 +28,9 @@ interface PostRow {
   user_id: string;
   profiles?: Profile | null;
   post_images?: PostImage[];
+  like_count?: number;
+  is_liked?: boolean;
+  comment_count?: number;
 }
 
 // Skeleton loading component
@@ -113,10 +116,33 @@ export default function Index() {
 
             console.log(`Images for post ${post.id}:`, { images, imagesError, count: images?.length || 0 });
 
+            // Get like count for each post
+            const { count: likeCount } = await supabase
+              .from('post_likes')
+              .select('*', { count: 'exact', head: true })
+              .eq('post_id', post.id);
+
+            // Check if current user has liked this post
+            const { data: userLike } = await supabase
+              .from('post_likes')
+              .select('id')
+              .eq('post_id', post.id)
+              .eq('user_id', user?.id || '')
+              .single();
+
+            // Get comment count for each post
+            const { count: commentCount } = await supabase
+              .from('comments')
+              .select('*', { count: 'exact', head: true })
+              .eq('post_id', post.id);
+
             return {
               ...post,
               profiles: profile,
-              post_images: images || []
+              post_images: images || [],
+              like_count: likeCount || 0,
+              is_liked: !!userLike,
+              comment_count: commentCount || 0
             };
           })
         );
@@ -168,6 +194,82 @@ export default function Index() {
     fetchPosts();
   }, [fetchPosts]);
 
+  // Like/Unlike functionality
+  const handleLike = async (postId: string, isCurrentlyLiked: boolean) => {
+    if (!user?.id) return;
+
+    try {
+      if (isCurrentlyLiked) {
+        // Unlike the post
+        const { error } = await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Like the post
+        const { error } = await supabase
+          .from('post_likes')
+          .insert({ post_id: postId, user_id: user.id });
+
+        if (error) throw error;
+
+        // Create notification for the post owner (if not liking own post)
+        const post = posts.find(p => p.id === postId);
+        if (post && post.user_id !== user.id) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: post.user_id,
+              actor_id: user.id,
+              post_id: postId,
+              type: 'like'
+            });
+        }
+      }
+
+      // Update the posts state optimistically
+      setPosts((prevPosts: PostRow[]) => 
+        prevPosts.map((post: PostRow) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              is_liked: !isCurrentlyLiked,
+              like_count: isCurrentlyLiked 
+                ? (post.like_count || 1) - 1 
+                : (post.like_count || 0) + 1
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error: any) {
+      console.error('Error toggling like:', error.message);
+    }
+  };
+
+  const handleShare = async (post: PostRow) => {
+    try {
+      const username = post.profiles?.username || 'Someone';
+      const postText = post.body || 'Check out this post!';
+      const shareContent = `${username} shared: ${postText}`;
+      
+      const result = await Share.share({
+        message: shareContent,
+        title: 'AnimeLight Post',
+      });
+      
+      if (result.action === Share.sharedAction) {
+        console.log('Post shared successfully');
+      }
+    } catch (error: any) {
+      console.error('Error sharing post:', error.message);
+      Alert.alert('Error', 'Failed to share post');
+    }
+  };
+
   const openGallery = (images: string[], captions: string[]) => {
     console.log('=== OPENING GALLERY ===');
     console.log('Images array:', images);
@@ -187,6 +289,7 @@ export default function Index() {
     
     router.push({ pathname: '/(main)/Gallery', params: { images: imagesParam, captions: captionsParam } });
   };
+
 
   const stripHtml = (html?: string | null) => {
     if (!html) return '';
@@ -216,7 +319,7 @@ export default function Index() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Avatar uri={author?.image} size={hp(4.6)} rounded={20} />
+          <Avatar uri={author?.image || ''} size={hp(4.6)} rounded={20} />
           <View style={{ flex: 1 }}>
             <Text style={styles.username}>{author?.username || 'Unknown User'}</Text>
             <Text style={styles.timeText}>{formatDate(item.created_at)}</Text>
@@ -266,15 +369,35 @@ export default function Index() {
 
         {/* Action buttons */}
         <View style={styles.actionRow}>
-          <Pressable style={styles.actionButton}>
-            <Ionicons name="heart-outline" size={22} color={second.grayDark} />
-            <Text style={styles.actionText}>Like</Text>
+          <Pressable 
+            style={styles.actionButton}
+            onPress={() => handleLike(item.id, item.is_liked || false)}
+          >
+            <Ionicons 
+              name={item.is_liked ? "heart" : "heart-outline"} 
+              size={22} 
+              color={item.is_liked ? second.secondary2 : second.grayDark} 
+            />
+            <Text style={[styles.actionText, item.is_liked && { color: second.secondary2 }]}>
+              {item.like_count || 0} {/*{(item.like_count || 0) === 1 ? 'Like' : 'Likes'}*/}
+            </Text>
           </Pressable>
-          <Pressable style={styles.actionButton}>
+          <Pressable 
+            style={styles.actionButton}
+            onPress={() => router.push({
+              pathname: '/CommentScreen',
+              params: { postId: item.id, postContent: item.body || '' }
+            })}
+          >
             <Ionicons name="chatbubble-outline" size={22} color={second.grayDark} />
-            <Text style={styles.actionText}>Comment</Text>
+            <Text style={styles.actionText}>
+              {item.comment_count || 0} {(item.comment_count || 0) === 1 ? 'Comment' : 'Comments'}
+            </Text>
           </Pressable>
-          <Pressable style={styles.actionButton}>
+          <Pressable 
+            style={styles.actionButton}
+            onPress={() => handleShare(item)}
+          >
             <Ionicons name="share-outline" size={22} color={second.grayDark} />
             <Text style={styles.actionText}>Share</Text>
           </Pressable>

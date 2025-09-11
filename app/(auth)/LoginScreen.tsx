@@ -16,6 +16,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     setError('');
@@ -76,10 +77,14 @@ const LoginScreen = () => {
               style={styles.input}
               placeholder="Password"
               placeholderTextColor="#aaa"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
+              autoCapitalize="none"
             />
+            <TouchableOpacity onPress={() => setShowPassword(v => !v)} accessibilityLabel="Toggle password visibility">
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color="#aaa" />
+            </TouchableOpacity>
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
