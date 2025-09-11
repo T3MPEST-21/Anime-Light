@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/authContext';
+import { useTheme } from '@/context/themeContext';
 import { second } from '@/constants/theme';
 import { hp } from '@/helpers/common';
 import Avatar from '@/components/Avatar';
@@ -28,6 +29,7 @@ export default function Notification() {
   const router = useRouter();
   const authContext = useAuth();
   const user = authContext?.user;
+  const { theme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +114,11 @@ export default function Notification() {
     
     return (
       <Pressable 
-        style={[styles.notificationItem, !item.read && styles.unreadNotification]}
+        style={[
+          styles.notificationItem, 
+          { backgroundColor: theme.surface, borderColor: theme.border },
+          !item.read && [styles.unreadNotification, { backgroundColor: theme.primary + '10', borderColor: theme.primary }]
+        ]}
         onPress={() => !item.read && markAsRead(item.id)}
       >
         <Avatar 
@@ -126,32 +132,32 @@ export default function Notification() {
             <Ionicons 
               name={isLike ? 'heart' : 'chatbubble'} 
               size={16} 
-              color={isLike ? second.secondary2 : second.grayDark}
+              color={isLike ? theme.error : theme.textSecondary}
               style={styles.notificationIcon}
             />
-            <Text style={styles.notificationText}>
-              <Text style={styles.username}>{username}</Text>
+            <Text style={[styles.notificationText, { color: theme.text }]}>
+              <Text style={[styles.username, { color: theme.text }]}>{username}</Text>
               {isLike ? ' liked your post' : ' commented on your post'}
               {!isLike && item.content && (
-                <Text style={styles.commentPreview}>: "{item.content.substring(0, 30)}.."</Text>
+                <Text style={[styles.commentPreview, { color: theme.textSecondary }]}>: "{item.content.substring(0, 30)}"..</Text>
               )}
             </Text>
           </View>
           
-          <Text style={styles.postPreview} numberOfLines={1}>
+          <Text style={[styles.postPreview, { color: theme.textSecondary }]} numberOfLines={1}>
             {postPreview}{postPreview.length > 50 ? '...' : ''}
           </Text>
           
-          <Text style={styles.timestamp}>{formatTime(item.created_at)}</Text>
+          <Text style={[styles.timestamp, { color: theme.textLight }]}>{formatTime(item.created_at)}</Text>
         </View>
         
-        {!item.read && <View style={styles.unreadDot} />}
+        {!item.read && <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />}
       </Pressable>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header 
         title="Notifications"
         ShowBackButton={false}
@@ -167,9 +173,9 @@ export default function Notification() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="notifications-outline" size={48} color={second.grayLight} />
-            <Text style={styles.emptyText}>No notifications yet</Text>
-            <Text style={styles.emptySubtext}>You'll see likes and comments here</Text>
+            <Ionicons name="notifications-outline" size={48} color={theme.textLight} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No notifications yet</Text>
+            <Text style={[styles.emptySubtext, { color: theme.textLight }]}>You'll see likes and comments here</Text>
           </View>
         }
       />
@@ -180,7 +186,6 @@ export default function Notification() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: second.mainBg,
   },
   notificationsList: {
     flex: 1,
@@ -193,14 +198,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     marginBottom: 8,
-    backgroundColor: second.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: second.grayLight,
   },
   unreadNotification: {
-    backgroundColor: second.roseLight,
-    borderColor: second.secondary2,
+    // Dynamic styling applied inline
   },
   avatar: {
     marginRight: 12,
@@ -218,33 +220,27 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     fontSize: 14,
-    color: second.textDark,
     flex: 1,
   },
   username: {
     fontWeight: '600',
-    color: second.textDark,
   },
   commentPreview: {
     fontStyle: 'italic',
-    color: second.grayDark,
   },
   postPreview: {
     fontSize: 12,
-    color: second.grayDark,
     marginBottom: 4,
     marginLeft: 22,
   },
   timestamp: {
     fontSize: 12,
-    color: second.grayLight,
     marginLeft: 22,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: second.secondary2,
     marginLeft: 8,
     alignSelf: 'center',
   },
@@ -257,12 +253,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: second.grayDark,
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: second.grayLight,
     marginTop: 4,
   },
 });

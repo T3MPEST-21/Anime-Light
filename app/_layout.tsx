@@ -1,5 +1,6 @@
 import { second } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/context/authContext";
+import { ThemeProvider, useTheme } from "@/context/themeContext";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userServices";
 import { router, Slot, useRouter } from "expo-router";
@@ -8,13 +9,24 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function Layout() {
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: second.grayDark }}>
-          <ContentWithAuth />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <ThemedSafeAreaView>
+            <ContentWithAuth />
+          </ThemedSafeAreaView>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function ThemedSafeAreaView({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      {children}
+    </SafeAreaView>
   );
 }
 

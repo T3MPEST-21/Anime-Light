@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import { hp, wp } from '@/helpers/common';
 import { radius, second } from '@/constants/theme';
 import { useAuth } from '@/context/authContext';
+import { useTheme } from '@/context/themeContext';
 import Avatar from '@/components/Avatar';
 import RichTextEditor from '@/components/RichTextEditor';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +17,7 @@ import { RichEditor } from 'react-native-pell-rich-editor';
 export default function Create() {
   const router = useRouter();
   const { user } = useAuth() || {};
+  const { theme } = useTheme();
   const bodyRef = useRef('');
   const editorRef = useRef<RichEditor>(null);
   const [loading, setLoading] = useState(false);
@@ -145,15 +147,15 @@ export default function Create() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header title="Create Post" ShowBackButton={true} marginBottom={hp(2)} />
       <ScrollView contentContainerStyle={{ gap: 24, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* User Info */}
         <View style={styles.Header}>
           <Avatar uri={user?.image} size={hp(6.5)} rounded={radius.xl} />
           <View style={{ gap: 2 }}>
-            <Text style={styles.username}>{user?.username || 'User'}</Text>
-            <Text style={styles.publicText}>Public</Text>
+            <Text style={[styles.username, { color: theme.text }]}>{user?.username || 'User'}</Text>
+            <Text style={[styles.publicText, { color: theme.textSecondary }]}>Public</Text>
           </View>
         </View>
 
@@ -175,21 +177,21 @@ export default function Create() {
               </View>
             ))}
             {mediaList.length < 10 && (
-              <TouchableOpacity style={styles.addMediaBtn} onPress={pickImages}>
+              <TouchableOpacity style={[styles.addMediaBtn, { backgroundColor: theme.surface, borderColor: theme.primary }]} onPress={pickImages}>
                 {/* Ionicons should be imported if not already */}
-                <Text style={{ color: second.primary, fontSize: 28 }}>＋</Text>
+                <Text style={{ color: theme.primary, fontSize: 28 }}>＋</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
 
         {/* Error/Success */}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {success ? <Text style={styles.success}>{success}</Text> : null}
+        {error ? <Text style={[styles.error, { color: theme.error }]}>{error}</Text> : null}
+        {success ? <Text style={[styles.success, { color: theme.success }]}>{success}</Text> : null}
 
         {/* Post Button */}
         <TouchableOpacity
-          style={[styles.postBtn, loading && { opacity: 0.7 }]}
+          style={[styles.postBtn, { backgroundColor: theme.primary }, loading && { opacity: 0.7 }]}
           onPress={handlePost}
           disabled={loading}
         >
@@ -210,7 +212,6 @@ const styles = StyleSheet.create({
   title:{
     fontSize: hp(2.5),
     fontWeight: '400',
-    color: second.text,
     textAlign: 'center',
   },
   Header: {
@@ -229,7 +230,6 @@ const styles = StyleSheet.create({
   publicText: {
     fontSize: hp(1.7),
     fontWeight: '500',
-    color: second.text,
   },
   mediaPickerSection: {
     marginTop: 10,
@@ -267,14 +267,11 @@ const styles = StyleSheet.create({
     width: wp(28),
     height: hp(13),
     borderRadius: radius.lg,
-    backgroundColor: '#f3f3f3',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: second.primary,
   },
   postBtn: {
-    backgroundColor: second.primary,
     paddingVertical: 14,
     borderRadius: radius.xl,
     alignItems: 'center',
@@ -286,13 +283,11 @@ const styles = StyleSheet.create({
     fontSize: hp(2.1),
   },
   error: {
-    color: '#d00',
     textAlign: 'center',
     marginTop: 4,
     fontSize: hp(1.8),
   },
   success: {
-    color: 'green',
     textAlign: 'center',
     marginTop: 4,
     fontSize: hp(1.8),
@@ -300,7 +295,6 @@ const styles = StyleSheet.create({
   username: {
     fontSize: hp(2.2),
     fontWeight: '500',
-    color: second.text,
   },
   textEditor: {
     //marginTop: 10

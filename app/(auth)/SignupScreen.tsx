@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TextInput, KeyboardAvoidingView, Platform, Touc
 import React, { useState } from 'react';
 import { hp } from '@/helpers/common';
 import { second } from '@/constants/theme';
+import { useTheme } from '@/context/themeContext';
 import CustomButton from '@/components/customButton';
 import BackButton from '@/components/BackButton';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 const SignupScreen = () => {
+  const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
   const router = useRouter();
@@ -88,7 +90,7 @@ const SignupScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: second.grayLight }}
+      style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
@@ -98,94 +100,94 @@ const SignupScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <BackButton />
-        <View style={styles.container}>
-          <Text style={styles.title}>Let's get you started, shall we?</Text>
+        <View style={[styles.container, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.title, { color: theme.text }]}>Let's get you started, shall we?</Text>
           <View style={styles.form}>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="person-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Full Name"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 value={fullname}
                 onChangeText={setFullname}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="at-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="at-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Username"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 autoCapitalize="none"
                 value={username}
                 onChangeText={setUsername}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="mail-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Email"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
                 onChangeText={setEmail}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="star-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="star-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Favorite Anime (optional)"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 value={favoriteAnime}
                 onChangeText={setFavoriteAnime}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="lock-closed-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Password"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
                 autoCapitalize="none"
               />
               <TouchableOpacity onPress={() => setShowPassword(v => !v)} accessibilityLabel="Toggle password visibility">
-                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color="#aaa" />
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color="#aaa" style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+              <Ionicons name="lock-closed-outline" size={22} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Repeat Password"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showRepeatPassword}
                 value={repeatPassword}
                 onChangeText={setRepeatPassword}
                 autoCapitalize="none"
               />
               <TouchableOpacity onPress={() => setShowRepeatPassword(v => !v)} accessibilityLabel="Toggle repeat password visibility">
-                <Ionicons name={showRepeatPassword ? "eye-off-outline" : "eye-outline"} size={22} color="#aaa" />
+                <Ionicons name={showRepeatPassword ? "eye-off-outline" : "eye-outline"} size={22} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={[styles.error, { color: theme.error }]}>{error}</Text> : null}
             <CustomButton
               title={loading ? '' : 'Sign Up'}
               onPress={handleSignup}
               loading={loading}
-              buttonStyle={styles.signupButton}
-              textStyle={styles.signupButtonText}
+              buttonStyle={[styles.signupButton, { backgroundColor: theme.primary }]}
+              textStyle={[styles.signupButtonText, { color: theme.buttonText }]}
             />
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account?</Text>
+              <Text style={[styles.loginText, { color: theme.textSecondary }]}>Already have an account?</Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/LoginScreen')}>
-                <Text style={styles.loginLink}>Login</Text>
+                <Text style={[styles.loginLink, { color: theme.primary }]}>Login</Text>
               </TouchableOpacity>
             </View>
           </View>

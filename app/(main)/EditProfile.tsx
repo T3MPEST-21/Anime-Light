@@ -5,6 +5,7 @@ import { hp, wp } from '@/helpers/common';
 import Header from '@/components/Header';
 import { Image } from 'expo-image';
 import { useAuth } from '@/context/authContext';
+import { useTheme } from '@/context/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,6 +14,7 @@ import { imageFile } from '@/services/ImageService';
 
 const EditProfile = () => {
   const { user, setUserData } = useAuth() ?? {};
+  const { theme } = useTheme();
   const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -38,10 +40,10 @@ const EditProfile = () => {
   const handleSave = async () => {
     if (!user) {
       return (
-        <View style={{ flex: 1, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Image source={require('../../assets/images/naruto-not-logged-in.png')} style={{ width: wp(50), height: wp(50) }} />
-            <Text style={{ color: second.text, fontSize: hp(2.5), textAlign: 'center', marginTop: 20 }}>User not found. Please log in again.</Text>
+            <Text style={{ color: theme.text, fontSize: hp(2.5), textAlign: 'center', marginTop: 20 }}>User not found. Please log in again.</Text>
           </View>
         </View>
       );
@@ -88,7 +90,7 @@ const EditProfile = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           <Header title="Edit Profile" ShowBackButton={true} marginBottom={hp(2)} />
@@ -97,54 +99,57 @@ const EditProfile = () => {
             {/* Avatar */}
             <View style={styles.avatarContainer}>
               <Image source={avatar} style={styles.avatar} />
-              <Pressable style={styles.cameraIcon} onPress={pickImage}>
-                <Ionicons name="camera" size={20} color={second.text} />
+              <Pressable style={[styles.cameraIcon, { backgroundColor: theme.surface }]} onPress={pickImage}>
+                <Ionicons name="camera" size={20} color={theme.text} />
               </Pressable>
             </View>
 
             {/* Username */}
-            <View style={styles.input}>
-              <Ionicons name="at-outline" size={18} color={second.text} />
+            <View style={[styles.input, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+              <Ionicons name="at-outline" size={18} color={theme.textSecondary} />
               <TextInput
                 value={username}
                 onChangeText={setUsername}
                 placeholder="Username"
-                style={{ flex: 1, fontSize: hp(2.1), color: second.text }}
+                placeholderTextColor={theme.textLight}
+                style={{ flex: 1, fontSize: hp(2.1), color: theme.text }}
                 autoCapitalize="none"
               />
             </View>
 
             {/* Phone (optional) */}
-            <View style={styles.input}>
-              <Ionicons name="call-outline" size={18} color={second.text} />
+            <View style={[styles.input, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+              <Ionicons name="call-outline" size={18} color={theme.textSecondary} />
               <TextInput
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="Phone (optional)"
-                style={{ flex: 1, fontSize: hp(2.1), color: second.text }}
+                placeholderTextColor={theme.textLight}
+                style={{ flex: 1, fontSize: hp(2.1), color: theme.text }}
                 keyboardType="phone-pad"
               />
             </View>
 
             {/* Bio */}
-            <View style={[styles.input, styles.bio]}>
-              <Ionicons name="document-text-outline" size={18} color={second.text} style={{ marginTop: 5 }} />
+            <View style={[styles.input, styles.bio, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+              <Ionicons name="document-text-outline" size={18} color={theme.textSecondary} style={{ marginTop: 5 }} />
               <TextInput
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Bio"
-                style={{ flex: 1, fontSize: hp(2.1), color: second.text, minHeight: 60 }}
+                placeholderTextColor={theme.textLight}
+                style={{ flex: 1, fontSize: hp(2.1), color: theme.text, minHeight: 60 }}
                 multiline
                 maxLength={200}
               />
             </View>
 
-            {error ? <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text> : null}
-            {success ? <Text style={{ color: 'green', textAlign: 'center' }}>{success}</Text> : null}
+            {error ? <Text style={{ color: theme.error, textAlign: 'center' }}>{error}</Text> : null}
+            {success ? <Text style={{ color: theme.success, textAlign: 'center' }}>{success}</Text> : null}
 
             <Pressable
               style={{
-                backgroundColor: second.primary,
+                backgroundColor: theme.primary,
                 padding: 15,
                 borderRadius: radius.xxl,
                 alignItems: 'center',
@@ -154,7 +159,7 @@ const EditProfile = () => {
               onPress={handleSave}
               disabled={loading}
             >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: hp(2.1) }}>
+              <Text style={{ color: theme.buttonText, fontWeight: 'bold', fontSize: hp(2.1) }}>
                 {loading ? 'Saving...' : 'Save Changes'}
               </Text>
             </Pressable>
@@ -171,14 +176,12 @@ const styles = StyleSheet.create({
   input: {
     flexDirection: 'row',
     borderWidth: 0.4,
-    borderColor: second.text,
     borderRadius: radius.xxl,
     padding: 17,
     paddingHorizontal: 20,
     gap: 5,
     borderCurve: 'continuous',
     alignItems: 'center',
-    backgroundColor: '#fafafa',
   },
   bio: {
     height: hp(15),
@@ -195,8 +198,7 @@ const styles = StyleSheet.create({
     right: -10,
     padding: 8,
     borderRadius: 50,
-    backgroundColor: second.darkLight,
-    shadowColor: second.text,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 5,
@@ -208,7 +210,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     overflow: 'hidden',
     borderCurve: 'continuous',
-    borderColor: second.darkLight,
     borderWidth: 1,
   },
   avatarContainer: {

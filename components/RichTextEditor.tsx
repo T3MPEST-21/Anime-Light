@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     richToolbar: {
         borderTopRightRadius: radius.xl,
         borderTopLeftRadius: radius.xl,
-        backgroundColor: second.gray,
+        backgroundColor: second.grayDark,
     },
     rich: {
         minHeight: 240,
