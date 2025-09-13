@@ -60,12 +60,15 @@ function TabsContent() {
       <Tabs.Screen name="index" options={{
         tabBarIcon: ({ color, size }) => <HomeTabIcon color={color} size={size} />
       }} />
+      <Tabs.Screen name="Friends" options={{
+        tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color} size={size} />
+      }} />
       <Tabs.Screen name="chats" options={{
-        tabBarIcon: ({color, size}) => <Ionicons name="chatbubbles" size={size} color={color} />
+        tabBarIcon: ({color, size}) => <Ionicons name="chatbubbles" size={size} color={second.secondary2} />
       }} />
-      <Tabs.Screen name="create" options={{
+      {/*<Tabs.Screen name="create" options={{
         tabBarIcon: ({color, size}) => <Ionicons name="add-circle" size={size} color={theme.primary} />
-      }} />
+      }} />*/}
       <Tabs.Screen name="Notification" options={{
         tabBarIcon: ({color, size}) => <Ionicons name="notifications" size={size} color={color} />
       }} />

@@ -159,7 +159,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ThemeContext.Provider value={{ theme, isDark, toggleTheme, setTheme }}>
-      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.background} />
+      <StatusBar 
+        style={isDark ? 'light' : 'dark'} 
+        backgroundColor={theme.surface}
+        translucent={false}
+      />
       {children}
     </ThemeContext.Provider>
   );

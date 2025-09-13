@@ -556,13 +556,15 @@ export default function Index() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.surface }]}>
+        <Pressable onPress={() => router.push('/(tabs)')}>
         <Text style={[styles.title, { color: theme.primary }]}>AnimeLight</Text>
+        </Pressable>
         <View style={styles.icons}>
-          <Pressable onPress={() => router.push('/(tabs)/Notification')}>
+          {/*<Pressable onPress={() => router.push('/(tabs)/Notification')}>
             <Ionicons name="heart-outline" size={25} color={theme.textSecondary} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/(tabs)/create')}>
-            <Ionicons name="add-circle-outline" size={25} color={theme.textSecondary} />
+          </Pressable>*/}
+          <Pressable onPress={() => router.push('/(main)/create')}>
+            <Ionicons name="add-circle-outline" size={30} color={second.secondary2} />
           </Pressable>
           <Pressable onPress={() => router.push('/(tabs)/Profile')}>
             <Avatar uri={user?.image} size={hp(4.3)} rounded={20} style={styles.avatarImage} />
