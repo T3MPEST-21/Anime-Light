@@ -13,6 +13,7 @@ import {
   Animated,
   Dimensions,
   TouchableOpacity,
+ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,7 @@ import { useTheme } from '@/context/themeContext';
 import { second } from '@/constants/theme';
 import { hp, wp } from '@/helpers/common';
 import Avatar from '@/components/Avatar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -65,16 +67,20 @@ export default function CommentsBottomSheet({
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  const isMountedRef = useRef(true);
+  const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (visible && postData) {
       // Slide up animation
       Animated.parallel([
         Animated.timing(slideAnim, {
-          toValue: screenHeight * 0.3, // Show 70% of screen
+          toValue: 0, // Fully visible
           duration: 300,
           useNativeDriver: true,
         }),
@@ -92,6 +98,12 @@ export default function CommentsBottomSheet({
       opacityAnim.setValue(0);
     }
   }, [visible, postData]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const handleClose = () => {
     Animated.parallel([
@@ -135,12 +147,13 @@ export default function CommentsBottomSheet({
         ...comment,
         profiles: Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles
       })));
+      setErrorMsg('');
       
     } catch (error) {
       console.error('Error fetching comments:', error);
-      Alert.alert('Error', 'Failed to load comments');
+      if (isMountedRef.current) setErrorMsg('Failed to load comments');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
@@ -189,6 +202,9 @@ export default function CommentsBottomSheet({
       }]);
       
       setNewComment('');
+      setTimeout(() => {
+        listRef.current?.scrollToEnd({ animated: true });
+      }, 50);
       onCommentAdded?.();
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -224,9 +240,9 @@ export default function CommentsBottomSheet({
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Text style={[styles.username, { color: theme.primary }]}>@{item.profiles?.username || 'Unknown'}</Text>
-          <Text style={[styles.commentText, { color: theme.textSecondary }]}>{item.content}</Text>
           <Text style={[styles.timestamp, { color: theme.textSecondary }]}>{formatTime(item.created_at)}</Text>
         </View>
+        <Text style={[styles.commentText, { color: theme.textSecondary }]}>{item.content}</Text>
       </View>
     </View>
   );
@@ -246,6 +262,9 @@ export default function CommentsBottomSheet({
           style={styles.overlayTouch} 
           activeOpacity={1} 
           onPress={handleClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss comments"
+          accessibilityHint="Closes the comments sheet"
         />
         
         {/* Bottom sheet */}
@@ -264,7 +283,7 @@ export default function CommentsBottomSheet({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
             <Text style={[styles.headerTitle, { color: theme.text }]}>Comments</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose} accessibilityRole="button" accessibilityLabel="Close comments" accessibilityHint="Closes the comments sheet">
               <Ionicons name="close" size={24} color={theme.text} />
             </TouchableOpacity>
           </View>
@@ -287,27 +306,40 @@ export default function CommentsBottomSheet({
           <KeyboardAvoidingView 
             style={styles.commentsSection}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={insets.bottom + 60}
           >
             <FlatList
+              ref={listRef}
               data={comments}
               renderItem={renderComment}
               keyExtractor={(item) => item.id}
               style={styles.commentsList}
               contentContainerStyle={styles.commentsContainer}
               showsVerticalScrollIndicator={false}
+              keyboardDismissMode="interactive"
+              keyboardShouldPersistTaps="handled"
+              ListHeaderComponent={errorMsg ? (
+                <Text style={{ color: theme.error, textAlign: 'center', paddingVertical: 6 }}>{errorMsg}</Text>
+              ) : null}
               ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Ionicons name="chatbubble-outline" size={48} color={theme.textLight} />
-                  <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No comments yet</Text>
-                  <Text style={[styles.emptySubtext, { color: theme.textLight }]}>Be the first to comment!</Text>
-                </View>
+                loading ? (
+                  <View style={styles.emptyState}>
+                    <ActivityIndicator size="small" color={theme.primary} />
+                  </View>
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="chatbubble-outline" size={48} color={theme.textLight} />
+                    <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No comments yet</Text>
+                    <Text style={[styles.emptySubtext, { color: theme.textLight }]}>Be the first to comment!</Text>
+                  </View>
+                )
               }
             />
 
             {/* Comment input */}
             <View style={[styles.inputContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
               <Avatar 
-                uri={user?.user_metadata?.avatar_url} 
+                uri={user?.image || user?.user_metadata?.avatar_url} 
                 size={hp(3.5)}
               />
               <TextInput
@@ -420,6 +452,7 @@ const styles = StyleSheet.create({
   commentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   username: {
