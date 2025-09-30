@@ -22,6 +22,8 @@ import { useTheme } from '@/context/themeContext';
 import { second } from '@/constants/theme';
 import { hp, wp } from '@/helpers/common';
 import Avatar from '@/components/Avatar';
+import ProfileModal from '@/components/ProfileModal';
+// import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -63,6 +65,18 @@ export default function CommentsBottomSheet({
   const authContext = useAuth();
   const user = authContext?.user;
   const { theme, isDark } = useTheme();
+  // const router = useRouter();
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+  const openProfileModal = (userId: string) => {
+    setSelectedProfileId(userId);
+    setProfileModalVisible(true);
+  };
+  const closeProfileModal = () => {
+    setProfileModalVisible(false);
+    setSelectedProfileId(null);
+  };
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -232,11 +246,13 @@ export default function CommentsBottomSheet({
 
   const renderComment = ({ item }: { item: Comment }) => (
     <View style={styles.commentItem}>
-      <Avatar 
-        uri={item.profiles?.image || ''} 
-        size={hp(4)}
-        style={styles.avatar}
-      />
+      <TouchableOpacity onPress={() => item.user_id && openProfileModal(item.user_id)}>
+        <Avatar 
+          uri={item.profiles?.image || ''} 
+          size={hp(4)}
+          style={styles.avatar}
+        />
+      </TouchableOpacity>
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Text style={[styles.username, { color: theme.primary }]}>@{item.profiles?.username || 'Unknown'}</Text>
@@ -291,10 +307,12 @@ export default function CommentsBottomSheet({
           {/* Original post preview */}
           <View style={[styles.postPreview, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
             <View style={styles.postHeader}>
-              <Avatar 
-                uri={postData.profiles?.image || ''} 
-                size={hp(3.5)} 
-              />
+              <TouchableOpacity onPress={() => postData.user_id && openProfileModal(postData.user_id)}>
+                <Avatar 
+                  uri={postData.profiles?.image || ''} 
+                  size={hp(3.5)} 
+                />
+              </TouchableOpacity>
               <Text style={[styles.postAuthor, { color: theme.primary }]}>@{postData.profiles?.username || 'Unknown'}</Text>
             </View>
             {postData.body && (
@@ -356,12 +374,17 @@ export default function CommentsBottomSheet({
                 onPress={handleAddComment}
                 disabled={!newComment.trim() || submitting}
               >
-                <Ionicons name="send" size={20} color="white" />
+                <Ionicons name="send" size={17} color="white" />
               </Pressable>
             </View>
           </KeyboardAvoidingView>
         </Animated.View>
       </Animated.View>
+      <ProfileModal
+        visible={profileModalVisible}
+        userId={selectedProfileId}
+        onClose={closeProfileModal}
+      />
     </Modal>
   );
 }
@@ -498,7 +521,7 @@ const styles = StyleSheet.create({
     borderTopColor: second.grayLight,
   },
   inputAvatar: {
-    marginRight: 12,
+    marginRight: 1,
     marginBottom: 8,
   },
   textInput: {
@@ -511,11 +534,13 @@ const styles = StyleSheet.create({
     fontSize: hp(1.7),
     color: second.text,
     maxHeight: 100,
+    marginLeft: 10,
   },
   sendButton: {
-    marginLeft: 12,
-    marginBottom: 8,
-    padding: 8,
+    marginLeft: 10,
+    marginBottom: 3,
+    padding: 5,
+    borderRadius: 20,
   },
   sendButtonDisabled: {
     opacity: 0.5,

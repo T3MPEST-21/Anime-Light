@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+
+import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
 import { useRouter } from 'expo-router';
 import BackButton from './BackButton';
-import { second } from '@/constants/theme';
 import { hp } from '@/helpers/common';
+import { useTheme } from '@/context/themeContext';
+
 
 
 interface HeaderProps {
@@ -13,13 +15,14 @@ interface HeaderProps {
 }
 export default function Header({ title, ShowBackButton, marginBottom }: HeaderProps) {
   const router = useRouter();
+  const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { marginBottom }]}>
+    <View style={[styles.container, { marginBottom }]}> 
       {ShowBackButton && <BackButton onPress={() => router.back()} style={styles.backButton}/>}
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
     </View>
-  )
+  );
 }
 
 

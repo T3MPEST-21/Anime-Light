@@ -141,7 +141,7 @@ const UserHeader = ({ user, router, theme }: UserHeaderProps) => {
   return (
     <View style={{flex: 1, backgroundColor: theme.background}}>
       <View>
-        <Header title="Profile" ShowBackButton={true} marginBottom={30} />
+        <Header title="Profile" ShowBackButton={false} marginBottom={30} />
         <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: theme.primary + '20' }]} onPress={() => router.push('/settings')}>
           <Ionicons name='settings' size={24} color={theme.primary} />
         </TouchableOpacity>
@@ -153,6 +153,7 @@ const UserHeader = ({ user, router, theme }: UserHeaderProps) => {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={{gap: 15}}>
           <View style={styles.avatarContainer}>
+            {/* @ts-ignore */}
             <Avatar uri={profile.image} size={hp(12)} rounded={radius.xxl*1.4} />
             <Pressable style={[styles.editIcon, { backgroundColor: theme.surface }]} onPress={() => router.push('/(main)/EditProfile')}>
               <Ionicons name="pencil-outline" size={15} color={theme.text} />

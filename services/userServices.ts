@@ -1,3 +1,21 @@
+// Search users by username (case-insensitive, partial match), excluding the current user
+export const searchUsers = async (search: string, excludeUserId: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .ilike('username', `%${search}%`)
+            .neq('id', excludeUserId);
+        if (error) {
+            console.error('Error searching users:', error);
+            return [];
+        }
+        return data || [];
+    } catch (error) {
+        console.error('Exception in searchUsers:', error);
+        return [];
+    }
+};
 import { supabase } from "@/lib/supabase";
 
 export const getUserData = async (userId: string) => {

@@ -13,6 +13,7 @@ import Avatar from '@/components/Avatar';
 import CustomActivityLoader from '@/components/CustomActivityLoader';
 import ImageGalleryModal from '@/components/ImageGalleryModal';
 import CommentsBottomSheet from '@/components/CommentsBottomSheet';
+import ProfileModal from '@/components/ProfileModal';
 
 // Types for our data structure
 interface Profile {
@@ -73,6 +74,8 @@ const SkeletonLoader = ({ theme }: { theme: any }) => (
 );
 
 export default function Index() {
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const hasLoadedRef = useRef<boolean>(false);
   const subscriptionRef = useRef<any>(null);
   const flatListRef = useRef<FlatList>(null);
@@ -292,7 +295,9 @@ export default function Index() {
     setNewPostsCount(0); // Reset new posts counter when user refreshes
     setPage(0);
     setHasMorePosts(true);
-    fetchPosts(true, 0);
+    AsyncStorage.removeItem(POSTS_CACHE_KEY).then(() => {
+      fetchPosts(true, 0);
+    });
   }, [fetchPosts, setNewPostsCount]);
 
   const loadMorePosts = useCallback(() => {
@@ -440,7 +445,7 @@ export default function Index() {
   };
 
   const renderItem = ({ item }: { item: PostRow }) => {
-    const author = item.profiles;
+  const author = item.profiles;
     const imgs = item.post_images || [];
     const captions = imgs.map((i) => i.caption || '');
     const imageUrls = imgs.map((i) => i.image_url);
@@ -448,9 +453,16 @@ export default function Index() {
     console.log(`Rendering post ${item.id} with ${imgs.length} images`);
 
     return (
-      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}> 
         <View style={styles.cardHeader}>
-          <Avatar uri={author?.image || ''} size={hp(4.6)} rounded={20} />
+          <TouchableOpacity onPress={() => {
+            if (author?.id) {
+              setProfileUserId(author.id);
+              setProfileModalVisible(true);
+            }
+          }}>
+            <Avatar uri={author?.image || ''} size={hp(4.6)} rounded={20} />
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={[styles.username, { color: theme.text }]}>{author?.username || 'Unknown User'}</Text>
             <Text style={[styles.timeText, { color: theme.textSecondary }]}>{formatDate(item.created_at)}</Text>
@@ -561,7 +573,7 @@ export default function Index() {
           <Pressable onPress={() => router.push('/(tabs)/Notification')}>
             <Ionicons name="heart-outline" size={25} color={theme.textSecondary} />
           </Pressable>
-          <Pressable onPress={() => router.push('/(tabs)/create')}>
+          <Pressable onPress={() => router.push('/(main)/create')}>
             <Ionicons name="add-circle-outline" size={25} color={theme.textSecondary} />
           </Pressable>
           <Pressable onPress={() => router.push('/(tabs)/Profile')}>
@@ -613,6 +625,11 @@ export default function Index() {
         postData={selectedPost}
         onClose={() => setCommentsVisible(false)}
         onCommentAdded={handleCommentAdded}
+      />
+      <ProfileModal
+        visible={profileModalVisible}
+        userId={profileUserId}
+        onClose={() => setProfileModalVisible(false)}
       />
     </View>
   );

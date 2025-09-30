@@ -1,14 +1,17 @@
+
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { radius, second } from '@/constants/theme';
 import { hp, wp } from '@/helpers/common';
+import { useRouter } from 'expo-router';
 
 interface BackButtonProps {
   onPress?: () => void;
   style?: ViewStyle;
   iconSize?: number;
   iconColor?: string;
+  fallbackRoute?: string; // Optional fallback route
 }
 
 const BackButton: React.FC<BackButtonProps> = ({
@@ -16,9 +19,25 @@ const BackButton: React.FC<BackButtonProps> = ({
   style,
   iconSize = 20,
   iconColor = '#222',
+  fallbackRoute = '/(tabs)', // Default fallback to main tabs
 }) => {
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
+    // @ts-ignore: canGoBack is available in expo-router >=2.0.0
+    if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.button, style]} activeOpacity={0.7}>
+    <TouchableOpacity onPress={handleBack} style={[styles.button, style]} activeOpacity={0.7}>
       <Ionicons name="chevron-back" size={iconSize} color={iconColor} />
     </TouchableOpacity>
   );
