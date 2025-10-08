@@ -41,7 +41,7 @@ interface PostRow {
 
 // Skeleton loading component
 const SkeletonCard = ({ theme }: { theme: any }) => (
-  <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+  <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: 17 }]}>
     <View style={styles.cardHeader}>
       <View style={[styles.skeletonAvatar, { backgroundColor: theme.skeleton }]} />
       <View style={{ flex: 1 }}>
