@@ -177,7 +177,7 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
 
   const avatarYPosition = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [hp(5), hp(6)], // Adjust start and end Y position
+    outputRange: [hp(5), hp(2)], // Adjust start and end Y position
     extrapolate: "clamp",
   });
 
@@ -642,6 +642,15 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
       {/* This is the container for the elements that stay on top */}
       <Animated.View style={styles.headerBar} pointerEvents="box-none">
         <Header title="Profile" ShowBackButton={false} marginBottom={1} />
+        <TouchableOpacity
+          style={[
+            styles.settingsBtn,
+            { backgroundColor: theme.primary + "20" },
+          ]}
+          onPress={() => router.push("/settings")}
+        >
+          <Ionicons name="settings-outline" size={24} color={theme.primary} />
+        </TouchableOpacity>
         <Animated.View
           style={[
             styles.avatarPositioner,

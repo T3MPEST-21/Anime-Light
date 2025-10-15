@@ -628,6 +628,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     overflow: "hidden",
     zIndex: 11, // Above the modal content
+    marginTop: -5, // avatar should be higher
+    marginLeft: 10,
   },
   headerContainer: {
     paddingTop: hp(5) + hp(6), // Make space for the initial avatar position
