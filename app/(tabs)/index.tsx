@@ -860,6 +860,7 @@ export const styles = StyleSheet.create({
   listStyle: {
     padding: 16,
     paddingTop: 8,
+    paddingBottom: 90,
   },
   emptyContainer: {
     alignItems: "center",
