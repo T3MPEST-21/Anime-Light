@@ -341,7 +341,7 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
       <View
         style={[
           feedStyles.card,
-          { backgroundColor: theme.surface, borderColor: theme.border, },
+          { backgroundColor: theme.surface, borderColor: theme.border },
         ]}
       >
         {/* Post Header */}
@@ -614,7 +614,9 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: 100 }}>
+    <View
+      style={{ flex: 1, backgroundColor: theme.background, paddingBottom: 100 }}
+    >
       <Animated.FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -628,14 +630,37 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 16 }}
         ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-        ListEmptyComponent={!postsLoading ? <EmptyPostPlaceholder /> : <View />}
+        ListEmptyComponent={
+          postsLoading ? (
+            <CustomActivityLoader style={{ marginTop: hp(10) }} />
+          ) : (
+            <EmptyPostPlaceholder />
+          )
+        }
       />
 
       {/* This is the container for the elements that stay on top */}
       <Animated.View style={styles.headerBar} pointerEvents="box-none">
         <Header title="Profile" ShowBackButton={false} marginBottom={1} />
-        <Animated.View style={[styles.avatarPositioner, { top: avatarYPosition, left: avatarXPosition, width: avatarSize, height: avatarSize, borderRadius: avatarBorderRadius, alignItems: "center", justifyContent: "center"}]}>
-          <Avatar uri={profile.image || ""} size={AVATAR_MAX_SIZE} rounded={radius.xxl * 1.4}  />
+        <Animated.View
+          style={[
+            styles.avatarPositioner,
+            {
+              top: avatarYPosition,
+              left: avatarXPosition,
+              width: avatarSize,
+              height: avatarSize,
+              borderRadius: avatarBorderRadius,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+          ]}
+        >
+          <Avatar
+            uri={profile.image || ""}
+            size={AVATAR_MAX_SIZE}
+            rounded={radius.xxl * 1.4}
+          />
         </Animated.View>
       </Animated.View>
 
@@ -674,7 +699,7 @@ const styles = StyleSheet.create({
   },
   avatarPositioner: {
     position: "absolute",
-    overflow: 'hidden', // Important for the borderRadius animation
+    overflow: "hidden", // Important for the borderRadius animation
   },
   settingsBtn: {
     position: "absolute",
@@ -740,6 +765,6 @@ const styles = StyleSheet.create({
   headerContainer: {
     // This is the container for the scrollable part of the header
     paddingTop: hp(5), // Make space for the initial avatar position
-    position: 'relative',
+    position: "relative",
   },
 });
