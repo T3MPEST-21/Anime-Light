@@ -37,6 +37,8 @@ interface ProfileModalProps {
   visible: boolean;
   userId: string | null;
   onClose: () => void;
+  // Optional router prop accepted by some callers (not used by the modal itself)
+  router?: any;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -208,6 +210,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const avatarBorderRadius = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [radius.xxl * 1.4, AVATAR_MIN_SIZE / 2],
+    extrapolate: "clamp",
+  });
+
+  const collapsedHeaderOpacity = scrollY.interpolate({
+    inputRange: [HEADER_SCROLL_DISTANCE - 20, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, 1],
     extrapolate: "clamp",
   });
 
@@ -491,7 +499,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           ]}
         >
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Ionicons name="close" size={24} color={theme.text}/>
+            <Ionicons name="close" size={24} color={theme.text} />
           </TouchableOpacity>
           {loading || !profile ? (
             <View
@@ -525,6 +533,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   !postsLoading ? <EmptyPostPlaceholder /> : <View />
                 }
               />
+              <Animated.View
+                style={[
+                  styles.collapsedHeaderContent,
+                  { opacity: collapsedHeaderOpacity },
+                ]}
+              >
+                <Text style={[styles.collapsedUsername, { color: theme.text }]}>
+                  {profile?.username}
+                </Text>
+              </Animated.View>
               <Animated.View
                 style={[
                   styles.avatarPositioner,
@@ -638,6 +656,20 @@ const styles = StyleSheet.create({
   avatarContainer: {
     height: hp(12),
     alignSelf: "center",
+  },
+  collapsedHeaderContent: {
+    position: "absolute",
+    top: hp(6),
+    left: wp(4) + hp(5) + 12, // Aligns next to the shrunken avatar
+    right: wp(15), // Prevents overlap with close icon
+    height: hp(5),
+    justifyContent: "center",
+    zIndex: 12,
+  },
+  collapsedUsername: {
+    fontSize: hp(2.2),
+    fontWeight: "bold",
+    textAlign: "left",
   },
 });
 

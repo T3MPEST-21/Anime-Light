@@ -193,6 +193,12 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
     extrapolate: "clamp",
   });
 
+  const collapsedHeaderOpacity = scrollY.interpolate({
+    inputRange: [HEADER_SCROLL_DISTANCE - 20, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
   const fetchProfile = async () => {
     let isMounted = true;
     setLoading(true);
@@ -653,6 +659,16 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
         </TouchableOpacity>
         <Animated.View
           style={[
+            styles.collapsedHeaderContent,
+            { opacity: collapsedHeaderOpacity },
+          ]}
+        >
+          <Text style={[styles.collapsedUsername, { color: theme.text }]}>
+            {profile?.username}
+          </Text>
+        </Animated.View>
+        <Animated.View
+          style={[
             styles.avatarPositioner,
             {
               top: avatarYPosition,
@@ -690,6 +706,7 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
         visible={profileModalVisible}
         userId={profileUserId}
         onClose={() => setProfileModalVisible(false)}
+        router={router}
       />
     </View>
   );
@@ -775,5 +792,18 @@ const styles = StyleSheet.create({
     // This is the container for the scrollable part of the header
     paddingTop: hp(5), // Make space for the initial avatar position
     position: "relative",
+  },
+  collapsedHeaderContent: {
+    position: "absolute",
+    top: hp(2),
+    left: wp(4) + hp(5) + 12, // Aligns next to the shrunken avatar
+    right: wp(15), // Prevents overlap with settings icon
+    height: hp(5),
+    justifyContent: "center",
+  },
+  collapsedUsername: {
+    fontSize: hp(2.2),
+    fontWeight: "bold",
+    textAlign: "left",
   },
 });

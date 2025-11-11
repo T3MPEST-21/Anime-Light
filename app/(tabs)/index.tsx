@@ -142,7 +142,7 @@ export default function Index() {
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const hasLoadedRef = useRef<boolean>(false);
-  
+
   const subscriptionRef = useRef<any>(null);
   const flatListRef = useRef<FlatList>(null);
   const isInitialMount = useRef<boolean>(true);
@@ -743,6 +743,13 @@ export default function Index() {
               color={theme.textSecondary}
             />
           </Pressable>
+          <Pressable onPress={() => router.push("/(tabs)/ChatScreen")}>
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={25}
+              color={theme.textSecondary}
+            />
+          </Pressable>
           <Pressable onPress={() => router.push("/(tabs)/Profile")}>
             <Avatar
               uri={user?.image}
@@ -814,6 +821,7 @@ export default function Index() {
         visible={profileModalVisible}
         userId={profileUserId}
         onClose={() => setProfileModalVisible(false)}
+        router={router}
       />
     </View>
   );

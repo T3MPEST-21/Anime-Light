@@ -69,7 +69,7 @@ function TabsContent() {
           <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
         )
       }} />
-      <Tabs.Screen name="chats" options={{
+      <Tabs.Screen name="ChatScreen" options={{
         tabBarIcon: ({ color, size, focused }) => (
           <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
         )
