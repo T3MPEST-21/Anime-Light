@@ -1,18 +1,20 @@
-import React, { useRef, useState } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import Avatar from '@/components/Avatar';
+import CustomActivityLoader from '@/components/CustomActivityLoader';
 import Header from '@/components/Header';
-import { hp, wp } from '@/helpers/common';
+import RichTextEditor from '@/components/RichTextEditor';
 import { radius, second } from '@/constants/theme';
 import { useAuth } from '@/context/authContext';
 import { useTheme } from '@/context/themeContext';
-import Avatar from '@/components/Avatar';
-import RichTextEditor from '@/components/RichTextEditor';
-import * as ImagePicker from 'expo-image-picker';
+import { hp, wp } from '@/helpers/common';
 import { supabase } from '@/lib/supabase';
 import { imageFile } from '@/services/ImageService';
-import CustomActivityLoader from '@/components/CustomActivityLoader';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { RichEditor } from 'react-native-pell-rich-editor';
+
 
 export default function Create() {
   const router = useRouter();
@@ -24,6 +26,9 @@ export default function Create() {
   const [mediaList, setMediaList] = useState<{ uri: string; caption: string }[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [captionModalVisible, setCaptionModalVisible] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [tempCaption, setTempCaption] = useState('');
 
   // Pick multiple images
   const pickImages = async () => {
@@ -42,6 +47,27 @@ export default function Create() {
   // Remove a single image
   const removeImage = (idx: number) => {
     setMediaList(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Open caption modal
+  const openCaptionModal = (idx: number) => {
+    setSelectedImageIndex(idx);
+    setTempCaption(mediaList[idx]?.caption || '');
+    setCaptionModalVisible(true);
+  };
+
+  // Save caption
+  const saveCaption = () => {
+    if (selectedImageIndex !== null) {
+      setMediaList(prev => {
+        const updated = [...prev];
+        updated[selectedImageIndex].caption = tempCaption;
+        return updated;
+      });
+    }
+    setCaptionModalVisible(false);
+    setTempCaption('');
+    setSelectedImageIndex(null);
   };
 
   // Submit post
@@ -170,20 +196,91 @@ export default function Create() {
             {mediaList.map((img, idx) => (
               <View key={idx} style={styles.mediaGridItem}>
                 <Image source={{ uri: img.uri }} style={styles.mediaPreview} resizeMode="cover" />
-                <TouchableOpacity style={styles.deleteIcon} onPress={() => removeImage(idx)}>
-                  {/* Ionicons should be imported if not already */}
-                  <Text style={{ color: '#fff', fontSize: 16 }}>🗑️</Text>
-                </TouchableOpacity>
+                
+                {/* Caption indicator */}
+                {img.caption && (
+                  <View style={[styles.captionBadge, { backgroundColor: theme.primary }]}>
+                    <Text style={styles.captionBadgeText}>📝</Text>
+                  </View>
+                )}
+
+                {/* Actions overlay */}
+                <View style={styles.actionsOverlay}>
+                  <TouchableOpacity 
+                    style={[styles.actionBtn, { backgroundColor: theme.primary }]}
+                    onPress={() => openCaptionModal(idx)}
+                  >
+                    <Ionicons name="pencil" size={16} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.actionBtn, { backgroundColor: theme.error }]}
+                    onPress={() => removeImage(idx)}
+                  >
+                    <Ionicons name="trash" size={16} color="#fff" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
             {mediaList.length < 10 && (
               <TouchableOpacity style={[styles.addMediaBtn, { backgroundColor: theme.surface, borderColor: theme.primary }]} onPress={pickImages}>
-                {/* Ionicons should be imported if not already */}
-                <Text style={{ color: theme.primary, fontSize: 28 }}>＋</Text>
+                <Ionicons name="add" size={32} color={theme.primary} />
               </TouchableOpacity>
             )}
           </View>
         </View>
+
+        {/* Caption Modal */}
+        <Modal
+          visible={captionModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setCaptionModalVisible(false)}
+        >
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Add Caption</Text>
+              
+              <Image 
+                source={{ uri: mediaList[selectedImageIndex!]?.uri }} 
+                style={styles.modalPreview}
+                resizeMode="contain"
+              />
+              
+              <TextInput
+                style={[styles.captionInput, { 
+                  backgroundColor: theme.inputBackground, 
+                  borderColor: theme.inputBorder,
+                  color: theme.text,
+                }]}
+                placeholder="Add a caption for this image..."
+                placeholderTextColor={theme.placeholder}
+                multiline
+                maxLength={200}
+                value={tempCaption}
+                onChangeText={setTempCaption}
+              />
+
+              <Text style={[styles.captionCount, { color: theme.textSecondary }]}>
+                {tempCaption.length}/200
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, { backgroundColor: theme.inputBackground }]}
+                  onPress={() => setCaptionModalVisible(false)}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, { backgroundColor: theme.primary }]}
+                  onPress={saveCaption}
+                >
+                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Error/Success */}
         {error ? <Text style={[styles.error, { color: theme.error }]}>{error}</Text> : null}
@@ -254,6 +351,40 @@ const styles = StyleSheet.create({
     height: hp(13),
     borderRadius: radius.lg,
   },
+  captionBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  captionBadgeText: {
+    fontSize: 12,
+  },
+  actionsOverlay: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    flexDirection: 'row',
+    gap: 6,
+    zIndex: 2,
+  },
+  actionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
   deleteIcon: {
     position: 'absolute',
     top: 4,
@@ -298,5 +429,57 @@ const styles = StyleSheet.create({
   },
   textEditor: {
     //marginTop: 10
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(4),
+  },
+  modalContent: {
+    borderRadius: radius.xl,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: hp(2.2),
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: radius.lg,
+    marginBottom: 12,
+  },
+  captionInput: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: 12,
+    minHeight: 80,
+    fontSize: hp(1.8),
+    textAlignVertical: 'top',
+  },
+  captionCount: {
+    alignSelf: 'flex-end',
+    fontSize: hp(1.6),
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBtnText: {
+    fontSize: hp(1.8),
+    fontWeight: '600',
+  },
 });

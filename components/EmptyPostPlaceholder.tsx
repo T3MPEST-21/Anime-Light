@@ -2,15 +2,22 @@ import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { useTheme } from "@/context/themeContext";
 
-const placeholderImage = require("../assets/images/react-logo.png"); // Use any image from your assets
+// placeholder image
+const placeholderImage = require("../assets/images/luffy-no-post.png");
 
 const EmptyPostPlaceholder: React.FC = () => {
   const { theme } = useTheme();
   return (
+    // empty post placeholder
     <View style={styles.container}>
       <Image source={placeholderImage} style={styles.image} />
-      <Text style={[styles.text, { color: theme.textSecondary }]}>
-        This user has not posted anything yet.
+      {/* text */}
+      <Text style={[styles.text, { color: theme.textSecondary, fontSize:18 }]}>
+        it's quiet in here...
+        <Text style={[styles.text, { color: theme.textSecondary, fontSize: 14 }]}>
+          {/* subtext */}
+          looks like they haven't shared anything yet
+        </Text>
       </Text>
     </View>
   );
@@ -29,7 +36,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   text: {
-    fontSize: 16,
+    // fontSize: 16,
     textAlign: "center",
   },
 });

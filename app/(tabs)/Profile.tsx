@@ -299,7 +299,7 @@ const UserHeader = ({ currentUser, router, theme }: UserHeaderProps) => {
         : "Check out this post!";
       await Share.share({
         message: `${username} shared: ${postText}`,
-        title: "AnimeLight Post",
+        title: "AnimeLite Post",
       });
     } catch (error: any) {
       Alert.alert("Error", "Failed to share post");

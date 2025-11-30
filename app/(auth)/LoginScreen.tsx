@@ -1,15 +1,15 @@
-import { StyleSheet, Text, View, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native'
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react'
-import BackButton from '@/components/BackButton'
-import { useRouter } from 'expo-router';
-import { hp } from '@/helpers/common';
+import BackButton from '@/components/BackButton';
+import CustomButton from '@/components/customButton';
 import { second } from '@/constants/theme';
 import { useTheme } from '@/context/themeContext';
-import CustomButton from '@/components/customButton';
+import { hp } from '@/helpers/common';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -43,6 +43,7 @@ const LoginScreen = () => {
     console.log('error', error);
     if (error) {
       Alert.alert('error: ' + error.message);
+      setError(error.message);
     }
   };
 
@@ -90,7 +91,7 @@ const LoginScreen = () => {
           </View>
           {error ? <Text style={[styles.error, { color: theme.error }]}>{error}</Text> : null}
 
-          <TouchableOpacity style={styles.forgotButton} onPress={() => alert("Forgot Password pressed")}>
+          <TouchableOpacity style={styles.forgotButton} onPress={() => router.push('/(auth)/ForgotPasswordScreen')}>
             <Text style={[styles.forgotText, { color: theme.primary }]}>Forgot Password?</Text>
           </TouchableOpacity>
 

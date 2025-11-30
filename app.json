@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "AnimeLight",
-    "slug": "AnimeLight",
+    "name": "AnimeLite",
+    "slug": "AnimeLite",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/goku-logo.png",
-    "scheme": "animelight",
+    "icon": "./assets/images/goku-logo-2.png",
+    "scheme": "animelite",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/goku-logo.png",
+        "foregroundImage": "./assets/images/goku-logo-2.png",
         "backgroundColor": "#fdf5e6"
       },
       "edgeToEdgeEnabled": true
@@ -21,14 +21,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/goku-logo.png"
+      "favicon": "./assets/images/goku-logo-2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/goku-logo.png",
+          "image": "./assets/images/goku-logo-2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#fdf5e6"

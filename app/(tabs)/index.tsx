@@ -727,7 +727,7 @@ export default function Index() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.surface }]}>
-        <Text style={[styles.title, { color: theme.primary }]}>AnimeLight</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>AnimeLite</Text>
         <View style={styles.icons}>
           <Pressable onPress={() => router.push("/(tabs)/Notification")}>
             <Ionicons
@@ -779,9 +779,11 @@ export default function Index() {
                 size={60}
                 color={theme.textSecondary}
               />
+              {/* No posts */}
               <Text style={[styles.noPosts, { color: theme.text }]}>
                 No posts yet
               </Text>
+              {/* Be the first to share something! */}
               <Text
                 style={[styles.noPostsSubtext, { color: theme.textSecondary }]}
               >
@@ -887,14 +889,14 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   card: {
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-    borderWidth: 1,
+    borderRadius: 10,
+    // padding: 0,
+    // shadowColor: "#000",
+    // shadowOpacity: 0.08,
+    // shadowRadius: 12,
+    // shadowOffset: { width: 0, height: 4 },
+    // elevation: 3,
+    // borderWidth: 1,
   },
   cardHeader: {
     flexDirection: "row",

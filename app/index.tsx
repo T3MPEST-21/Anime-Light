@@ -18,7 +18,7 @@ export default function Index() {
       /> 
       {/* title */}
       <View style={{gap: 20}}>
-        <Text style={styles.title}>Anime Light</Text>
+        <Text style={styles.title}>Anime Lite</Text>
         <Text style={styles.subtitle}>Welcome to Anime Light, your go-to app for all your anime needs. Discover the latest anime releases, stay up-to-date with the latest news, and explore a vast library of anime content.</Text>
       </View>
       <View style={styles.footer}>
