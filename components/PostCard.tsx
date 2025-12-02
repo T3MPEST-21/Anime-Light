@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/context/themeContext";
+import { PostImage, PostRow } from "@/types/PostRow";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import FormattedText from "./FormattedText";
 import ImageGalleryModal from "./ImageGalleryModal";
-import { PostRow, PostImage } from "@/types/PostRow";
 
 interface PostCardProps {
   post: PostRow;
@@ -40,7 +41,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <View style={[styles.card, { backgroundColor: theme.card }]}>
-      <Text style={[styles.body, { color: theme.text }]}>{post.body}</Text>
+      {post.body && <FormattedText html={post.body} containerStyle={styles.bodyContainer} />}
       {post.post_images && post.post_images.length > 0 && (
         <View style={styles.imageGrid}>
           {post.post_images.map((img: PostImage, idx: number) => (
@@ -105,6 +106,9 @@ const styles = StyleSheet.create({
   body: {
     fontSize: 16,
     marginBottom: 8,
+  },
+  bodyContainer: {
+    marginBottom: 12,
   },
   imageGrid: {
     flexDirection: "row",

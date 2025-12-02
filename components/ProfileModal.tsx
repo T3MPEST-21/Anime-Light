@@ -1,37 +1,35 @@
-import React, { useEffect, useState, useRef } from "react";
-import EmptyPostPlaceholder from "@/components/EmptyPostPlaceholder";
-import { PostRow } from "@/types/PostRow";
 import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  StatusBar,
-  FlatList,
-  Pressable,
-  TouchableOpacity,
-  Share,
-  Alert,
-  Image,
-} from "react-native";
+    styles as feedStyles,
+    formatDate
+} from "@/app/(tabs)/index";
 import Avatar from "@/components/Avatar";
-import { getUserData } from "@/services/userServices";
+import EmptyPostPlaceholder from "@/components/EmptyPostPlaceholder";
+import { radius } from "@/constants/theme";
 import { useAuth } from "@/context/authContext";
 import { useTheme } from "@/context/themeContext";
-import CustomActivityLoader from "./CustomActivityLoader";
-import { Ionicons } from "@expo/vector-icons";
 import { hp, wp } from "@/helpers/common";
+import { getUserData } from "@/services/userServices";
+import { PostRow } from "@/types/PostRow";
 import { getPostsByUser } from "@/userPostsService";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  styles as feedStyles,
-  formatDate,
-  stripHtml,
-} from "@/app/(tabs)/index";
-import { radius } from "@/constants/theme";
-import ImageGalleryModal from "./ImageGalleryModal";
+    Alert,
+    Animated,
+    Dimensions,
+    Image,
+    Modal,
+    Pressable,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import CommentsBottomSheet from "./CommentsBottomSheet";
+import CustomActivityLoader from "./CustomActivityLoader";
+import FormattedText from "./FormattedText";
+import ImageGalleryModal from "./ImageGalleryModal";
 
 interface ProfileModalProps {
   visible: boolean;
@@ -286,9 +284,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         </View>
 
         {item.body ? (
-          <Text style={[feedStyles.body, { color: theme.text }]}>
-            {stripHtml(item.body)}
-          </Text>
+          <FormattedText html={item.body} containerStyle={feedStyles.bodyContainer} />
         ) : null}
 
         {/* Image Grid, Action Buttons etc. - Copied from Profile.tsx renderItem */}

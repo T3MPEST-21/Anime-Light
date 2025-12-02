@@ -1,28 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Animated,
-  Dimensions,
-  TouchableOpacity,
-ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
+import Avatar from '@/components/Avatar';
+import FormattedText from '@/components/FormattedText';
+import ProfileModal from '@/components/ProfileModal';
+import { second } from '@/constants/theme';
 import { useAuth } from '@/context/authContext';
 import { useTheme } from '@/context/themeContext';
-import { second } from '@/constants/theme';
-import { hp, wp } from '@/helpers/common';
-import Avatar from '@/components/Avatar';
-import ProfileModal from '@/components/ProfileModal';
+import { hp } from '@/helpers/common';
+import { supabase } from '@/lib/supabase';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Dimensions,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 // import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -316,7 +317,7 @@ export default function CommentsBottomSheet({
               <Text style={[styles.postAuthor, { color: theme.primary }]}>@{postData.profiles?.username || 'Unknown'}</Text>
             </View>
             {postData.body && (
-              <Text style={[styles.postContent, { color: theme.textSecondary }]}>{stripHtml(postData.body)}</Text>
+              <FormattedText html={postData.body} containerStyle={styles.postContentContainer} />
             )}
           </View>
 
@@ -451,6 +452,9 @@ const styles = StyleSheet.create({
     fontSize: hp(1.7),
     color: second.grayDark,
     lineHeight: hp(2.2),
+  },
+  postContentContainer: {
+    marginVertical: 8,
   },
   commentsSection: {
     flex: 1,

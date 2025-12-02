@@ -1,30 +1,31 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  Alert,
-  Text,
-  View,
-  StyleSheet,
-  Pressable,
-  FlatList,
-  RefreshControl,
-  Image,
-  TouchableOpacity,
-  Share,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { supabase } from "@/lib/supabase";
+import Avatar from "@/components/Avatar";
+import CommentsBottomSheet from "@/components/CommentsBottomSheet";
+import CustomActivityLoader from "@/components/CustomActivityLoader";
+import FormattedText from "@/components/FormattedText";
+import ImageGalleryModal from "@/components/ImageGalleryModal";
+import ProfileModal from "@/components/ProfileModal";
+import { second } from "@/constants/theme";
 import { useAuth } from "@/context/authContext";
 import { useNewPosts } from "@/context/newPostsContext";
 import { useTheme } from "@/context/themeContext";
 import { hp, wp } from "@/helpers/common";
-import { second } from "@/constants/theme";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
-import Avatar from "@/components/Avatar";
-import CustomActivityLoader from "@/components/CustomActivityLoader";
-import ImageGalleryModal from "@/components/ImageGalleryModal";
-import CommentsBottomSheet from "@/components/CommentsBottomSheet";
-import ProfileModal from "@/components/ProfileModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+    Alert,
+    FlatList,
+    Image,
+    Pressable,
+    RefreshControl,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 // Types for our data structure
 interface Profile {
@@ -570,9 +571,7 @@ export default function Index() {
         </View>
 
         {item.body ? (
-          <Text style={[styles.body, { color: theme.text }]}>
-            {stripHtml(item.body)}
-          </Text>
+          <FormattedText html={item.body} containerStyle={styles.bodyContainer} />
         ) : null}
 
         {imgs.length > 0 ? (
@@ -868,7 +867,7 @@ export const styles = StyleSheet.create({
     gap: 15,
   },
   listStyle: {
-    padding: 16,
+    padding: 5,
     paddingTop: 8,
     paddingBottom: 90,
   },
@@ -890,7 +889,8 @@ export const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 10,
-    // padding: 0,
+     paddingVertical: 10,
+     paddingHorizontal: 8,
     // shadowColor: "#000",
     // shadowOpacity: 0.08,
     // shadowRadius: 12,
@@ -919,6 +919,9 @@ export const styles = StyleSheet.create({
   body: {
     fontSize: hp(1.9),
     lineHeight: hp(2.6),
+    marginBottom: 12,
+  },
+  bodyContainer: {
     marginBottom: 12,
   },
   // Image grid styles
