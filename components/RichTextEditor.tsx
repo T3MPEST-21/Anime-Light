@@ -1,8 +1,9 @@
 import { radius } from '@/constants/theme';
 import { useTheme } from '@/context/themeContext';
 import { hp } from '@/helpers/common';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Animated, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 
 interface RichTextEditorProps {
@@ -65,6 +66,33 @@ const RichTextEditor = ({ editorRef, onChange, maxLength = 5000 }: RichTextEdito
   const charPercentage = (charCount / maxLength) * 100;
   const charColor = charPercentage > 90 ? theme.error : charPercentage > 70 ? theme.warning : theme.textSecondary;
 
+  // Toolbar height used for sticky positioning/padding
+  const TOOLBAR_HEIGHT = 52;
+
+  // Helper: parse hex color to RGB
+  const hexToRgb = (hex: string) => {
+    if (!hex) return null;
+    const cleaned = hex.replace('#', '');
+    const full = cleaned.length === 3 ? cleaned.split('').map(c => c + c).join('') : cleaned;
+    const bigint = parseInt(full, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return { r, g, b };
+  };
+
+  // Simple luminance contrast detection -> returns '#000' or '#fff'
+  const getReadableTextColor = (bgHex: string) => {
+    const rgb = hexToRgb(String(bgHex || '#ffffff'));
+    if (!rgb) return '#000';
+    // Per ITU-R BT.601
+    const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+    return luminance > 186 ? '#000' : '#fff';
+  };
+
+  // Decide editor content text color based on input background for contrast
+  const editorTextColor = getReadableTextColor(theme.inputBackground);
+
   return (
     <View style={{ minHeight: 285 }}>
       {/* Editor Card: toolbar + editor + stats inside one bordered container to avoid overlap */}
@@ -72,43 +100,48 @@ const RichTextEditor = ({ editorRef, onChange, maxLength = 5000 }: RichTextEdito
         backgroundColor: theme.inputBackground,
         borderColor: borderColorInterpolate,
         shadowOpacity: shadowOpacityInterpolate,
+        paddingTop: TOOLBAR_HEIGHT,
       }]}>
-        {/* Horizontal FlatList wrapper avoids ScrollView nesting warnings while keeping toolbar scrollable */}
-        <FlatList
-          data={[0]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => String(item)}
-          renderItem={() => (
+        {/* Sticky toolbar: positioned absolutely at top with scrollable content */}
+        <View style={[styles.toolbarWrapper, { backgroundColor: theme.surface }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarScroll}>
             <RichToolbar 
               style={[styles.richToolbar, { backgroundColor: theme.surface }]} 
               actions={[
-            actions.heading1,
-            actions.heading2,
-            actions.heading3,
-            actions.heading4,
-            actions.setBold,
-            actions.setItalic,
-            actions.setUnderline,
-            actions.line,
-            actions.insertBulletsList,
-            actions.insertOrderedList,
-            actions.blockquote,
-            actions.alignLeft,
-            actions.alignCenter,
-            actions.alignRight,
-            actions.setTextColor,
-            actions.setBackgroundColor,
-            actions.undo,
-            actions.redo,
-            actions.removeFormat,
-          ]} 
+                actions.heading1,
+                actions.heading2,
+                actions.heading3,
+                actions.heading4,
+                actions.setBold,
+                actions.setItalic,
+                actions.setUnderline,
+                actions.line,
+                actions.insertBulletsList,
+                actions.insertOrderedList,
+                actions.blockquote,
+                actions.alignLeft,
+                actions.alignCenter,
+                actions.alignRight,
+                actions.setTextColor,
+                actions.setBackgroundColor,
+                actions.undo,
+                actions.redo,
+                actions.removeFormat,
+              ]}
               iconMap={{
-            [actions.heading1]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 16}}>H1</Text>,
-            [actions.heading2]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 14}}>H2</Text>,
-            [actions.heading3]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 12}}>H3</Text>,
-            [actions.heading4]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 11}}>H4</Text>,
-          }} 
+                [actions.heading1]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 16}}>H1</Text>,
+                [actions.heading2]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 14}}>H2</Text>,
+                [actions.heading3]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 12}}>H3</Text>,
+                [actions.heading4]: ({tintColor}: {tintColor: string}) => <Text style={{color: tintColor, fontWeight: 'bold', fontSize: 11}}>H4</Text>,
+                [actions.setBold]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-bold" size={20} color={tintColor} />,
+                [actions.setItalic]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-italic" size={20} color={tintColor} />,
+                [actions.setUnderline]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-underline" size={20} color={tintColor} />,
+                [actions.insertBulletsList]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-list-bulleted" size={20} color={tintColor} />,
+                [actions.insertOrderedList]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-list-numbered" size={20} color={tintColor} />,
+                [actions.blockquote]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="format-quote-close" size={20} color={tintColor} />,
+                [actions.undo]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="undo" size={20} color={tintColor} />,
+                [actions.redo]: ({tintColor}: {tintColor: string}) => <MaterialCommunityIcons name="redo" size={20} color={tintColor} />,
+              }} 
               editor={editorRef} 
               disabled={false} 
               iconTint={theme.textSecondary}
@@ -116,14 +149,18 @@ const RichTextEditor = ({ editorRef, onChange, maxLength = 5000 }: RichTextEdito
               disabledIconTint={theme.placeholder}
               flatContainerStyle={styles.listStyle}
             />
-          )}
-        />
+          </ScrollView>
+        </View>
 
         <RichEditor 
           ref={editorRef} 
           onChange={handleChange} 
           placeholder={"Share what's on your mind..."} 
-          editorStyle={{ ...styles.contentStyle, color: theme.text }} 
+          editorStyle={{ 
+            ...styles.contentStyle, 
+            color: editorTextColor,
+            contentCSSText: `body { color: ${editorTextColor}; background: transparent; } p { color: ${editorTextColor}; }`
+          }} 
           containerStyle={styles.richEditorContainer}
           initialContentHTML=""
           editorInitializedCallback={() => {
@@ -171,12 +208,20 @@ export default RichTextEditor
 
 const styles = StyleSheet.create({
     richToolbar: {
-        borderTopRightRadius: radius.xl,
-        borderTopLeftRadius: radius.xl,
         paddingVertical: 10,
         paddingHorizontal: 4,
         borderBottomWidth: 0.5,
         minHeight: 50,
+    },
+    toolbarWrapper: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 52,
+        borderBottomWidth: 0.5,
+        borderBottomColor: 'rgba(0,0,0,0.1)',
+        zIndex: 10,
     },
     rich: {
         minHeight: 240,
@@ -232,6 +277,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         gap: 2,
         paddingVertical: 6,
+    },
+    toolbarScroll: {
+      paddingHorizontal: 6,
+      alignItems: 'center',
+      gap: 6,
     },
     statsContainer: {
         borderTopWidth: 1,

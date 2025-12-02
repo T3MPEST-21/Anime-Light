@@ -15,7 +15,6 @@ import React, { useRef, useState } from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
-
 export default function Create() {
   const router = useRouter();
   const { user } = useAuth() || {};
