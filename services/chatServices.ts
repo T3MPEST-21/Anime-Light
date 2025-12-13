@@ -21,7 +21,7 @@ export interface Message {
   content: string;
   sender_id: string;
   conversation_id: string;
-  status: "pending" | "sent" | "read"; // Added message status
+  status: "pending" | "sent" | "delivered" | "read" | "failed"; // Added message status
   profile: {
     username: string;
     image: string;
@@ -157,7 +157,7 @@ export const sendMessage = async (
 
 /**
  * Marks messages in a conversation as 'read' for the current user.
- * Only updates messages sent by others that are currently 'sent'.
+ * Only updates messages sent by others that are currently 'sent' or 'delivered'.
  */
 export const markMessagesAsRead = async (
   conversationId: string,
@@ -168,10 +168,31 @@ export const markMessagesAsRead = async (
     .update({ status: "read" })
     .eq("conversation_id", conversationId)
     .neq("sender_id", currentUserId) // Only mark messages sent by others
-    .eq("status", "sent"); // Only mark messages that haven't been read yet
+    .in("status", ["sent", "delivered"]); // Mark sent or delivered messages as read
 
   if (error) {
     console.error("Error marking messages as read:", error);
     throw error;
+  }
+};
+
+/**
+ * Marks messages in a conversation as 'delivered' for the current user.
+ * Only updates messages sent by others that are currently 'sent'.
+ */
+export const markMessagesAsDelivered = async (
+  conversationId: string,
+  currentUserId: string
+) => {
+  const { error } = await supabase
+    .from("messages")
+    .update({ status: "delivered" })
+    .eq("conversation_id", conversationId)
+    .neq("sender_id", currentUserId) // Only mark messages sent by others
+    .eq("status", "sent"); // Only mark messages that are currently just 'sent'
+
+  if (error) {
+    console.error("Error marking messages as delivered:", error);
+    // Don't throw here, as it's a background operation
   }
 };

@@ -1,29 +1,31 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import Avatar from "@/components/Avatar";
+import ChatHeader from "@/components/ChatHeader";
+import { useAuth } from "@/context/authContext";
+import { useTheme } from "@/context/themeContext";
+import { hp, wp } from "@/helpers/common";
+import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
+  ActivityIndicator,
+  Alert,
   FlatList,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
-import { useTheme } from "@/context/themeContext";
-import { useAuth } from "@/context/authContext";
-import { hp, wp } from "@/helpers/common";
-import { Ionicons } from "@expo/vector-icons";
-import Avatar from "@/components/Avatar";
-import { supabase } from "@/lib/supabase";
 import {
   getMessages,
-  sendMessage,
+  markMessagesAsDelivered,
   markMessagesAsRead,
   Message,
+  sendMessage,
 } from "../../services/chatServices";
-import ChatHeader from "@/components/ChatHeader";
 
 const ChatPage = () => {
   const { theme } = useTheme();
@@ -31,7 +33,7 @@ const ChatPage = () => {
   const { conversationId, otherUserName, otherUserImage } =
     useLocalSearchParams();
   const router = useRouter();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,11 @@ const ChatPage = () => {
     const conv = conversationId as string;
 
     fetchMessages(); // Fetch initial messages
+
+    // Mark messages as delivered immediately when we open the chat
+    if (user?.id) {
+      markMessagesAsDelivered(conv, user.id);
+    }
 
     // Debounce the markMessagesAsRead call to avoid excessive updates
     markAsReadDebounced.current = setTimeout(() => {
@@ -81,15 +88,18 @@ const ChatPage = () => {
               flatListRef.current.scrollToOffset({ offset: 0, animated: true });
             }
 
-            // If the new message is from someone else, mark it as read after a delay
+            // If the new message is from someone else
             if (user?.id && record.sender_id !== user.id) {
+              // Mark as delivered immediately
+              markMessagesAsDelivered(conv, user.id);
+
               clearTimeout(markAsReadDebounced.current); // Reset debounce
               markAsReadDebounced.current = setTimeout(() => {
                 markMessagesAsRead(conv, user.id as string);
               }, 1000);
             }
           } else if (payload.eventType === "UPDATE") {
-            // Handle message status update (e.g., 'read')
+            // Handle message status update (e.g., 'read', 'delivered')
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === record.id ? { ...msg, status: record.status } : msg
@@ -111,8 +121,9 @@ const ChatPage = () => {
     useCallback(() => {
       if (user?.id && typeof conversationId === "string") {
         // Mark messages as read when the screen is focused
-        // This handles cases where user navigates back to chat or app comes to foreground
         markMessagesAsRead(conversationId, user.id);
+        // Also ensure delivered is marked
+        markMessagesAsDelivered(conversationId, user.id);
       }
       return () => {
         // Cleanup if needed when screen loses focus
@@ -134,7 +145,6 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
-    // Ensure we have a logged-in user with an id and a valid conversationId
     if (
       newMessage.trim() === "" ||
       !user?.id ||
@@ -144,12 +154,13 @@ const ChatPage = () => {
       return;
 
     setSending(true);
+    const tempId = Math.random().toString();
     const tempMessage: Message = {
-      id: Math.random().toString(), // Temporary ID
-      created_at: new Date().toISOString(), // Temporary timestamp
+      id: tempId,
+      created_at: new Date().toISOString(),
       content: newMessage.trim(),
-      sender_id: user.id as string, // asserted because of the guard above
-      conversation_id: conversationId as string, // asserted because of the guard above
+      sender_id: user.id as string,
+      conversation_id: conversationId as string,
       status: "pending",
       profile: { username: user.username || "User", image: user.image || "" },
     };
@@ -163,17 +174,53 @@ const ChatPage = () => {
         conversationId as string,
         user.id as string,
         tempMessage.content
-      ); // Both are guaranteed here
+      );
       // Update the optimistic message with the real ID and created_at from the DB
       setMessages((prev) =>
-        prev.map((msg) => (msg.id === tempMessage.id ? sentMsg : msg))
+        prev.map((msg) => (msg.id === tempId ? sentMsg : msg))
       );
     } catch (error) {
       console.error("Failed to send message:", error);
-      // Optional: Revert optimistic update on error
-      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
+      // Update status to failed instead of removing
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempId ? { ...msg, status: "failed" } : msg
+        )
+      );
     } finally {
       setSending(false);
+    }
+  };
+
+  const retryMessage = async (message: Message) => {
+    if (!user?.id || typeof conversationId !== "string") return;
+
+    // Set status back to pending
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === message.id ? { ...msg, status: "pending" } : msg
+      )
+    );
+
+    try {
+      const sentMsg = await sendMessage(
+        conversationId as string,
+        user.id as string,
+        message.content
+      );
+      // Replace the failed message with the new successful one
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === message.id ? sentMsg : msg))
+      );
+    } catch (error) {
+      console.error("Retry failed:", error);
+      // Set back to failed
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === message.id ? { ...msg, status: "failed" } : msg
+        )
+      );
+      Alert.alert("Error", "Failed to resend message. Please try again.");
     }
   };
 
@@ -214,20 +261,37 @@ const ChatPage = () => {
             {item.content}
           </Text>
           {isOwnMessage && (
-            <Ionicons
-              name={
-                item.status === "read"
-                  ? "checkmark-done"
-                  : item.status === "sent"
-                  ? "checkmark"
-                  : "time-outline"
-              }
-              size={14}
-              color={
-                item.status === "read" ? theme.primary : theme.textSecondary
-              }
-              style={styles.messageStatusIcon}
-            />
+            <View style={styles.statusContainer}>
+              {item.status === "failed" ? (
+                <TouchableOpacity onPress={() => retryMessage(item)}>
+                  <Ionicons
+                    name="alert-circle"
+                    size={16}
+                    color={theme.error || "#ff0000"}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <Ionicons
+                  name={
+                    item.status === "read"
+                      ? "checkmark-done"
+                      : item.status === "delivered"
+                        ? "checkmark-done" // Delivered but not read (maybe different color?)
+                        : item.status === "sent"
+                          ? "checkmark"
+                          : "time-outline"
+                  }
+                  size={16}
+                  color={
+                    item.status === "read"
+                      ? theme.buttonText // Read: White (on primary bg)
+                      : item.status === "delivered"
+                        ? "rgba(255, 255, 255, 0.7)" // Delivered: Faded white
+                        : "rgba(255, 255, 255, 0.5)" // Sent/Pending: More faded
+                  }
+                />
+              )}
+            </View>
           )}
         </View>
       </View>
@@ -279,8 +343,13 @@ const ChatPage = () => {
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: theme.primary }]}
             onPress={handleSendMessage}
+            disabled={sending}
           >
-            <Ionicons name="send" size={20} color={theme.buttonText} />
+            {sending ? (
+              <ActivityIndicator size="small" color={theme.buttonText} />
+            ) : (
+              <Ionicons name="send" size={20} color={theme.buttonText} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -316,12 +385,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 20,
     maxWidth: "80%",
+    flexWrap: "wrap", // Allow wrapping if text is long
   },
   messageText: {
     fontSize: hp(1.9),
   },
-  messageStatusIcon: {
-    marginLeft: 5,
+  statusContainer: {
+    marginLeft: 4,
+    marginBottom: 2,
   },
   inputContainer: {
     flexDirection: "row",
