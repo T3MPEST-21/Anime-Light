@@ -1,7 +1,6 @@
 import Avatar from "@/components/Avatar";
 import CommentsBottomSheet from "@/components/CommentsBottomSheet";
 import CustomActivityLoader from "@/components/CustomActivityLoader";
-import FormattedText from "@/components/FormattedText";
 import ImageGalleryModal from "@/components/ImageGalleryModal";
 import ProfileModal from "@/components/ProfileModal";
 import { second } from "@/constants/theme";
@@ -15,16 +14,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    Pressable,
-    RefreshControl,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 // Types for our data structure
@@ -137,6 +136,422 @@ export const formatDate = (dateString?: string) => {
   if (diffInHours < 24) return `${diffInHours}h ago`;
   if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
   return date.toLocaleDateString();
+};
+
+// Full FormattedText component inlined to restore rich formatting
+const FormattedText = ({ html, containerStyle }: { html: string; containerStyle?: any }) => {
+  const { theme } = useTheme();
+
+  if (!html) return null;
+
+  const decodeHtmlEntities = (text: string): string => {
+    const map: { [key: string]: string } = {
+      '&nbsp;': ' ',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&quot;': '"',
+      '&#39;': "'",
+      '&amp;': '&',
+    };
+    return text.replace(/&[a-zA-Z0-9#]+;/g, (entity) => map[entity] || entity);
+  };
+
+  const stripHtml = (htmlString: string): string => {
+    let text = htmlString.replace(/<[^>]*>/g, '');
+    text = decodeHtmlEntities(text);
+    return text.replace(/\s+/g, ' ').trim();
+  };
+
+  interface ParsedSegment {
+    type: 'text' | 'heading' | 'blockquote' | 'list' | 'break';
+    content: string;
+    items?: string[];
+    subtype?: string;
+  }
+
+  const parseHtmlStructure = (htmlString: string): ParsedSegment[] => {
+    const segments: ParsedSegment[] = [];
+    let cleaned = htmlString.replace(/<script[^>]*>.*?<\/script>/gi, '');
+    cleaned = cleaned.replace(/<style[^>]*>.*?<\/style>/gi, '');
+
+    const blockElements = [
+      {
+        pattern: /<h([1-6])[^>]*>(.*?)<\/h\1>/gi,
+        type: 'heading',
+        extract: (match: RegExpExecArray) => ({
+          type: 'heading' as const,
+          content: stripHtml(match[2]),
+          subtype: `h${match[1]}`,
+        }),
+      },
+      {
+        pattern: /<blockquote[^>]*>(.*?)<\/blockquote>/gi,
+        type: 'blockquote',
+        extract: (match: RegExpExecArray) => ({
+          type: 'blockquote' as const,
+          content: stripHtml(match[1]),
+        }),
+      },
+      {
+        pattern: /<(ul|ol)[^>]*>(.*?)<\/\1>/gi,
+        type: 'list',
+        extract: (match: RegExpExecArray) => {
+          const items = match[2].match(/<li[^>]*>(.*?)<\/li>/gi) || [];
+          return {
+            type: 'list' as const,
+            content: '',
+            items: items.map((item) => stripHtml(item)),
+            subtype: match[1],
+          };
+        },
+      },
+      {
+        pattern: /<br\s*\/?>/gi,
+        type: 'break',
+        extract: () => ({
+          type: 'break' as const,
+          content: '',
+        }),
+      },
+      {
+        pattern: /<(p|div)[^>]*>(.*?)<\/\1>/gi,
+        type: 'text',
+        extract: (match: RegExpExecArray) => ({
+          type: 'text' as const,
+          content: stripHtml(match[2]),
+        }),
+      },
+    ];
+
+    for (const blockType of blockElements) {
+      let match;
+      blockType.pattern.lastIndex = 0;
+      while ((match = blockType.pattern.exec(cleaned)) !== null) {
+        segments.push(blockType.extract(match) as ParsedSegment);
+      }
+    }
+
+    if (segments.length === 0) {
+      segments.push({
+        type: 'text',
+        content: stripHtml(cleaned),
+      });
+    }
+
+    return segments;
+  };
+
+  const segments = parseHtmlStructure(html);
+
+  return (
+    <View style={containerStyle}>
+      {segments.map((segment, idx) => {
+        if (segment.type === 'heading') {
+          const level = segment.subtype?.replace('h', '') || '1';
+          const sizes: { [key: string]: number } = {
+            '1': 2.4, '2': 2.2, '3': 2.0, '4': 1.8, '5': 1.6, '6': 1.5,
+          };
+          return (
+            <Text
+              key={idx}
+              style={{
+                fontSize: hp(sizes[level]),
+                fontWeight: '700',
+                color: theme.text,
+                marginBottom: 8,
+              }}
+            >
+              {segment.content}
+            </Text>
+          );
+        } else if (segment.type === 'blockquote') {
+          return (
+            <View
+              key={idx}
+              style={{
+                borderLeftWidth: 4,
+                borderLeftColor: theme.primary,
+                paddingLeft: 12,
+                marginVertical: 8,
+              }}
+            >
+              <Text style={{ fontSize: hp(1.8), fontStyle: 'italic', color: theme.textSecondary }}>
+                {segment.content}
+              </Text>
+            </View>
+          );
+        } else if (segment.type === 'list') {
+          const items = segment.items || [];
+          const isOrdered = segment.subtype === 'ol';
+          return (
+            <View key={idx} style={{ marginVertical: 8, paddingLeft: 8 }}>
+              {items.map((item, itemIdx) => (
+                <Text
+                  key={itemIdx}
+                  style={{ fontSize: hp(1.8), color: theme.text, marginBottom: 4 }}
+                >
+                  {isOrdered ? `${itemIdx + 1}. ` : '• '}
+                  {item}
+                </Text>
+              ))}
+            </View>
+          );
+        } else if (segment.type === 'break') {
+          return <Text key={idx}>{'\n'}</Text>;
+        } else {
+          return (
+            <Text
+              key={idx}
+              style={{
+                fontSize: hp(1.8),
+                color: theme.text,
+                lineHeight: hp(2.4),
+                marginBottom: 8,
+              }}
+            >
+              {segment.content}
+            </Text>
+          );
+        }
+      })}
+    </View>
+  );
+};
+
+const PostCardItem = ({
+  item,
+  user,
+  theme,
+  handleLike,
+  handleShare,
+  openGallery,
+  openComments,
+  setProfileUserId,
+  setProfileModalVisible,
+}: {
+  item: PostRow;
+  user: any;
+  theme: any;
+  handleLike: (id: string, currentlyLiked: boolean) => void;
+  handleShare: (post: PostRow) => void;
+  openGallery: (images: string[], captions: string[]) => void;
+  openComments: (post: PostRow) => void;
+  setProfileUserId: (id: string) => void;
+  setProfileModalVisible: (visible: boolean) => void;
+}) => {
+  const [likeCount, setLikeCount] = useState(item.like_count || 0);
+  const [isLiked, setIsLiked] = useState(item.is_liked || false);
+
+  // Sync with prop changes (e.g. from parent refresh)
+  useEffect(() => {
+    setLikeCount(item.like_count || 0);
+    setIsLiked(item.is_liked || false);
+  }, [item.like_count, item.is_liked]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`realtime:post_likes:${item.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'post_likes',
+          filter: `post_id=eq.${item.id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === 'INSERT') {
+            if (user?.id && payload.new.user_id === user.id) {
+              setIsLiked(true);
+            } else {
+              setLikeCount((prev) => prev + 1);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setLikeCount((prev) => Math.max(0, prev - 1));
+            if (user?.id) {
+              const { error } = await supabase
+                .from('post_likes')
+                .select('id')
+                .eq('post_id', item.id)
+                .eq('user_id', user.id)
+                .single();
+              if (error) setIsLiked(false);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [item.id, user?.id]);
+
+  const author = item.profiles;
+  const imgs = item.post_images || [];
+  const captions = imgs.map((i) => i.caption || "");
+  const imageUrls = imgs.map((i) => i.image_url);
+
+  return (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+      ]}
+    >
+      <View style={styles.cardHeader}>
+        <TouchableOpacity
+          onPress={() => {
+            if (author?.id) {
+              setProfileUserId(author.id);
+              setProfileModalVisible(true);
+            }
+          }}
+        >
+          <Avatar uri={author?.image || ""} size={hp(4.6)} rounded={20} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.username, { color: theme.text }]}>
+            {author?.username || "Unknown User"}
+          </Text>
+          <Text style={[styles.timeText, { color: theme.textSecondary }]}>
+            {formatDate(item.created_at)}
+          </Text>
+        </View>
+        <Pressable style={styles.moreButton}>
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={20}
+            color={theme.textSecondary}
+          />
+        </Pressable>
+      </View>
+
+      {item.body ? (
+        <FormattedText html={item.body} containerStyle={styles.bodyContainer} />
+      ) : null}
+
+      {imgs.length > 0 ? (
+        <TouchableOpacity
+          onPress={() => {
+            openGallery(imageUrls, captions);
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={styles.imageGrid}>
+            {imgs.length === 1 ? (
+              <Image
+                source={{ uri: imgs[0].image_url }}
+                style={styles.singleImage}
+                resizeMode="cover"
+              />
+            ) : imgs.length === 2 ? (
+              <>
+                <Image
+                  source={{ uri: imgs[0].image_url }}
+                  style={styles.twoImageLeft}
+                  resizeMode="cover"
+                />
+                <Image
+                  source={{ uri: imgs[1].image_url }}
+                  style={styles.twoImageRight}
+                  resizeMode="cover"
+                />
+              </>
+            ) : (
+              <>
+                <Image
+                  source={{ uri: imgs[0].image_url }}
+                  style={styles.threeImageTop}
+                  resizeMode="cover"
+                />
+                <View style={styles.bottomRow}>
+                  <Image
+                    source={{ uri: imgs[1].image_url }}
+                    style={styles.threeImageBottomLeft}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.threeImageBottomRightContainer}>
+                    <Image
+                      source={{ uri: imgs[2].image_url }}
+                      style={styles.threeImageBottomRight}
+                      resizeMode="cover"
+                    />
+                    {imgs.length > 3 && (
+                      <View
+                        style={[
+                          styles.imageOverlay,
+                          { backgroundColor: theme.overlay },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.imageOverlayText,
+                            { color: theme.buttonText },
+                          ]}
+                        >
+                          +{imgs.length - 3}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      ) : null}
+
+      <View style={styles.actionRow}>
+        <Pressable
+          style={styles.actionButton}
+          onPress={() => handleLike(item.id, isLiked)}
+        >
+          <Ionicons
+            name={isLiked ? "heart" : "heart-outline"}
+            size={22}
+            color={isLiked ? theme.accent : theme.textSecondary}
+          />
+          <Text
+            style={[
+              styles.actionText,
+              { color: theme.textSecondary },
+              isLiked && { color: theme.accent },
+            ]}
+          >
+            {likeCount}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={styles.actionButton}
+          onPress={() => openComments(item)}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={22}
+            color={theme.textSecondary}
+          />
+          <Text style={[styles.actionText, { color: theme.textSecondary }]}>
+            {item.comment_count || 0}{" "}
+            {(item.comment_count || 0) === 1 ? "Comment" : "Comments"}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={styles.actionButton}
+          onPress={() => handleShare(item)}
+        >
+          <Ionicons
+            name="share-outline"
+            size={22}
+            color={theme.textSecondary}
+          />
+          <Text style={[styles.actionText, { color: theme.textSecondary }]}>
+            Share
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 };
 
 export default function Index() {
@@ -528,179 +943,18 @@ export default function Index() {
   };
 
   const renderItem = ({ item }: { item: PostRow }) => {
-    const author = item.profiles;
-    const imgs = item.post_images || [];
-    const captions = imgs.map((i) => i.caption || "");
-    const imageUrls = imgs.map((i) => i.image_url);
-
-    console.log(`Rendering post ${item.id} with ${imgs.length} images`);
-
     return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <View style={styles.cardHeader}>
-          <TouchableOpacity
-            onPress={() => {
-              if (author?.id) {
-                setProfileUserId(author.id);
-                setProfileModalVisible(true);
-              }
-            }}
-          >
-            <Avatar uri={author?.image || ""} size={hp(4.6)} rounded={20} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.username, { color: theme.text }]}>
-              {author?.username || "Unknown User"}
-            </Text>
-            <Text style={[styles.timeText, { color: theme.textSecondary }]}>
-              {formatDate(item.created_at)}
-            </Text>
-          </View>
-          <Pressable style={styles.moreButton}>
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={20}
-              color={theme.textSecondary}
-            />
-          </Pressable>
-        </View>
-
-        {item.body ? (
-          <FormattedText html={item.body} containerStyle={styles.bodyContainer} />
-        ) : null}
-
-        {imgs.length > 0 ? (
-          <TouchableOpacity
-            onPress={() => {
-              console.log(
-                `Tapped on post ${item.id} with ${imgs.length} images`
-              );
-              openGallery(imageUrls, captions);
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.imageGrid}>
-              {imgs.length === 1 ? (
-                // Single image - full width
-                <Image
-                  source={{ uri: imgs[0].image_url }}
-                  style={styles.singleImage}
-                  resizeMode="cover"
-                />
-              ) : imgs.length === 2 ? (
-                // Two images - side by side
-                <>
-                  <Image
-                    source={{ uri: imgs[0].image_url }}
-                    style={styles.twoImageLeft}
-                    resizeMode="cover"
-                  />
-                  <Image
-                    source={{ uri: imgs[1].image_url }}
-                    style={styles.twoImageRight}
-                    resizeMode="cover"
-                  />
-                </>
-              ) : (
-                // Three or more images - Facebook style grid (I don't actually know what to call it)
-                <>
-                  <Image
-                    source={{ uri: imgs[0].image_url }}
-                    style={styles.threeImageTop}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.bottomRow}>
-                    <Image
-                      source={{ uri: imgs[1].image_url }}
-                      style={styles.threeImageBottomLeft}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.threeImageBottomRightContainer}>
-                      <Image
-                        source={{ uri: imgs[2].image_url }}
-                        style={styles.threeImageBottomRight}
-                        resizeMode="cover"
-                      />
-                      {imgs.length > 3 && (
-                        <View
-                          style={[
-                            styles.imageOverlay,
-                            { backgroundColor: theme.overlay },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.imageOverlayText,
-                              { color: theme.buttonText },
-                            ]}
-                          >
-                            +{imgs.length - 3}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
-        ) : null}
-
-        {/* Action buttons */}
-        <View style={styles.actionRow}>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => handleLike(item.id, item.is_liked || false)}
-          >
-            <Ionicons
-              name={item.is_liked ? "heart" : "heart-outline"}
-              size={22}
-              color={item.is_liked ? theme.accent : theme.textSecondary}
-            />
-            <Text
-              style={[
-                styles.actionText,
-                { color: theme.textSecondary },
-                item.is_liked && { color: theme.accent },
-              ]}
-            >
-              {item.like_count || 0}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => openComments(item)}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={22}
-              color={theme.textSecondary}
-            />
-            <Text style={[styles.actionText, { color: theme.textSecondary }]}>
-              {item.comment_count || 0}{" "}
-              {(item.comment_count || 0) === 1 ? "Comment" : "Comments"}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => handleShare(item)}
-          >
-            <Ionicons
-              name="share-outline"
-              size={22}
-              color={theme.textSecondary}
-            />
-            <Text style={[styles.actionText, { color: theme.textSecondary }]}>
-              Share
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <PostCardItem
+        item={item}
+        user={user}
+        theme={theme}
+        handleLike={handleLike}
+        handleShare={handleShare}
+        openGallery={openGallery}
+        openComments={openComments}
+        setProfileUserId={setProfileUserId}
+        setProfileModalVisible={setProfileModalVisible}
+      />
     );
   };
 
@@ -889,8 +1143,8 @@ export const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 10,
-     paddingVertical: 10,
-     paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     // shadowColor: "#000",
     // shadowOpacity: 0.08,
     // shadowRadius: 12,
